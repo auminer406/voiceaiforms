@@ -37,6 +37,7 @@ export default function Demo() {
   const [promptText, setPromptText] = useState("Ready when you are.");
   const [hint, setHint] = useState<string>("");
   const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
   // answers
   const [answers, setAnswers] = useState<{ name?: string; email?: string; goal?: string }>({});
@@ -45,12 +46,11 @@ export default function Demo() {
 
   // audio / SR
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const srRef = useRef<any>(null);
+  const srRef = useRef<SpeechRecognition | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // hold-to-answer resolver
-  const holdResolveRef = useRef<((t: string) => void) | null>(null);
-  const holdRejectRef = useRef<((e: any) => void) | null>(null);
+  // keep last asked prompt (for optional retry UX later)
+  const lastPromptRef = useRef<string>("");
 
   // (Optional) lightweight server stubs
   const [sessionId, setSessionId] = useState("");
@@ -68,9 +68,21 @@ export default function Demo() {
     })();
   }, []);
 
+  /** ---- Interrupt TTS immediately ---- */
+  function stopSpeaking() {
+    const a = audioRef.current;
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+    }
+    setSpeaking(false);
+  }
+
   /** ---- Speak (await until TTS finishes) ---- */
   async function speak(text: string) {
     setPromptText(text);
+    lastPromptRef.current = text;
+
     // unlock autoplay
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!audioCtxRef.current && Ctx) audioCtxRef.current = new Ctx();
@@ -86,11 +98,21 @@ export default function Demo() {
     const url = URL.createObjectURL(blob);
 
     if (!audioRef.current) audioRef.current = new Audio();
-    audioRef.current.src = url;
+    const a = audioRef.current;
+    a.src = url;
 
+    setSpeaking(true);
     await new Promise<void>((resolve) => {
-      audioRef.current!.onended = () => { URL.revokeObjectURL(url); resolve(); };
-      audioRef.current!.play().catch(() => resolve());
+      a.onended = () => {
+        URL.revokeObjectURL(url);
+        setSpeaking(false);
+        resolve();
+      };
+      a.onpause = () => setSpeaking(false);
+      a.play().catch(() => {
+        setSpeaking(false);
+        resolve();
+      });
     });
   }
 
@@ -99,22 +121,20 @@ export default function Demo() {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return false;
     if (!srRef.current) {
-      const sr = new SR();
+      const sr = new SR() as SpeechRecognition;
       sr.lang = "en-US";
       sr.interimResults = false;
       sr.maxAlternatives = 1;
 
-      sr.onresult = (e: any) => {
+      sr.onresult = (e: SpeechRecognitionEvent) => {
         const t = (e.results?.[0]?.[0]?.transcript || "").trim();
-        if (holdResolveRef.current) holdResolveRef.current(t);
-        holdResolveRef.current = null;
-        holdRejectRef.current = null;
+        // resolve captured below via closure
+        pendingResolveRef.current?.(t);
+        clearPending();
       };
       sr.onerror = (e: any) => {
-        if (holdRejectRef.current) holdRejectRef.current(e);
-        holdResolveRef.current = null;
-        holdRejectRef.current = null;
-        setListening(false);
+        pendingRejectRef.current?.(e);
+        clearPending();
       };
       sr.onend = () => {
         setListening(false);
@@ -125,32 +145,53 @@ export default function Demo() {
     return true;
   }
 
-  /** ---- HOLD to answer: start on pointer down, stop on pointer up ---- */
-  const onHoldDown = async () => {
+  /** ---- Await one utterance (auto-start SR after each speak) ---- */
+  const pendingResolveRef = useRef<((t: string) => void) | null>(null);
+  const pendingRejectRef = useRef<((e: any) => void) | null>(null);
+  function clearPending() {
+    pendingResolveRef.current = null;
+    pendingRejectRef.current = null;
+    setListening(false);
+  }
+
+  async function awaitNextUtterance(timeoutMs = 12000): Promise<string> {
+    // stop TTS if still talking, then listen
+    if (speaking) stopSpeaking();
+
     if (!ensureSR()) {
-      setHint("Speech recognition not available. Try Chrome desktop or iOS Safari.");
-      return;
+      throw new Error("Speech recognition not available. Try Chrome desktop or iOS Safari.");
     }
+
     // ask mic if needed
     try {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       s.getTracks().forEach(t => t.stop());
     } catch {
-      setHint("Please allow microphone access.");
-      return;
+      throw new Error("Please allow microphone access.");
     }
+
+    // start listening
     setListening(true);
-    try { srRef.current.start(); } catch { /* SR may already be running */ }
-  };
 
-  const onHoldUp = () => {
-    try { srRef.current?.stop(); } catch {}
-  };
-
-  /** ---- Await one held utterance (returns transcript) ---- */
-  function awaitHoldUtterance(timeoutMs = 12000): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       let done = false;
+
+      // attach resolvers for sr callbacks
+      pendingResolveRef.current = (t: string) => {
+        if (done) return;
+        done = true;
+        resolve(t);
+      };
+      pendingRejectRef.current = (e: any) => {
+        if (done) return;
+        done = true;
+        reject(e);
+      };
+
+      // start SR
+      try { srRef.current!.start(); } catch { /* already running */ }
+
+      // timeout protection
       const to = setTimeout(() => {
         if (done) return;
         done = true;
@@ -158,18 +199,16 @@ export default function Demo() {
         reject(new Error("timeout"));
       }, timeoutMs);
 
-      holdResolveRef.current = (t: string) => {
-        if (done) return;
-        done = true;
+      // ensure we clear when promise settles
+      const finalize = (result: "resolve" | "reject") => {
         clearTimeout(to);
-        resolve(t);
+        clearPending();
       };
-      holdRejectRef.current = (e: any) => {
-        if (done) return;
-        done = true;
-        clearTimeout(to);
-        reject(e);
-      };
+      // wrap original resolvers to also finalize
+      const origResolve = pendingResolveRef.current;
+      const origReject = pendingRejectRef.current;
+      pendingResolveRef.current = (t: string) => { finalize("resolve"); origResolve?.(t); };
+      pendingRejectRef.current = (e: any) => { finalize("reject"); origReject?.(e); };
     });
   }
 
@@ -195,36 +234,33 @@ export default function Demo() {
     } catch {}
   }
 
-  /** ---- Deterministic flow (push-to-talk only) ---- */
+  /** ---- Conversational, auto-listen flow ---- */
   async function runFlow() {
-    // Welcome
-    await speak("Hey there, I’m your voice form. Press and hold the Answer button when you speak. Let’s get you set up.");
+    // Welcome (no button instructions)
+    await speak("Hey there, I’m your voice form. Let’s get you set up.");
 
     // NAME
-    // User must hold to answer each time; if invalid, we re-ask.
     while (true) {
       await speak("What’s your full name?");
-      setHint("Press & hold the Answer button, speak your name, then release.");
       try {
-        const heard = await awaitHoldUtterance();
+        const heard = await awaitNextUtterance();
         if (!/^[A-Za-z .'\-]{2,60}$/.test(heard)) {
-          await speak("I didn’t quite catch that. Please say your first and last name, then release.");
+          await speak("I didn’t quite catch that. Please say your first and last name.");
           continue;
         }
         setAnswers(a => ({ ...a, name: heard }));
         await advanceServer("name", heard);
         break;
-      } catch {
-        await speak("No problem. Let’s try again. Press and hold, say your full name, then release.");
+      } catch (e: any) {
+        await speak("No problem. Let’s try your name again.");
       }
     }
 
     // EMAIL
     while (true) {
       await speak("What’s the best email for your invite? You can say it like eric at gmail dot com.");
-      setHint("Press & hold, speak your email, then release.");
       try {
-        let heard = await awaitHoldUtterance();
+        let heard = await awaitNextUtterance();
         heard = normalizeEmailSpeech(heard);
         if (!EMAIL_RE.test(heard)) {
           await speak("That didn’t sound like a valid email. Please say it like name at company dot com.");
@@ -234,16 +270,15 @@ export default function Demo() {
         await advanceServer("email", heard);
         break;
       } catch {
-        await speak("Didn’t hear it that time. Let’s try again.");
+        await speak("Didn’t hear that email. Let’s try again.");
       }
     }
 
     // GOAL
     while (true) {
-      await speak("What’s your primary goal with Formversation? You can say: increase conversions, cleaner data into CRM, trigger automations faster, or all of the above.");
-      setHint("Press & hold, say your choice, then release.");
+      await speak("What’s your primary goal with Formversation? Increase conversions, cleaner data into your CRM, trigger automations faster, or all of the above?");
       try {
-        const heard = await awaitHoldUtterance();
+        const heard = await awaitNextUtterance();
         const g = fuzzyGoal(heard);
         if (!g) {
           await speak("Please choose one of the options, like increase conversions or all of the above.");
@@ -253,16 +288,15 @@ export default function Demo() {
         await advanceServer("primary_goal", g);
         break;
       } catch {
-        await speak("Let’s try again.");
+        await speak("I didn’t catch that. Let’s try your goal again.");
       }
     }
 
     // CONSENT (optional)
     while (true) {
-      await speak("Would you like early-supporter pricing at fifteen dollars a month for life? Please say yes or no.");
-      setHint("Press & hold, say yes or no, then release.");
+      await speak("Would you like early supporter pricing at fifteen dollars a month for life? Please say yes or no.");
       try {
-        const heard = await awaitHoldUtterance();
+        const heard = await awaitNextUtterance();
         const ok = yn(heard);
         if (ok === null) {
           await speak("Please say yes or no.");
@@ -279,14 +313,13 @@ export default function Demo() {
     const a = answersRef.current;
     const goalText =
       a.goal === "conversion" ? "increase conversions" :
-      a.goal === "data_quality" ? "cleaner data into CRM" :
+      a.goal === "data_quality" ? "cleaner data into your CRM" :
       a.goal === "automation" ? "trigger automations faster" :
       a.goal === "all" ? "all of the above" : "no goal selected";
 
     await speak(`Here’s what I have: ${a.name || "unknown name"}, ${a.email || "unknown email"}, goal: ${goalText}. Are we ready to submit? Please say yes or no.`);
-    setHint("Press & hold, say yes or no, then release.");
     try {
-      const heard = await awaitHoldUtterance();
+      const heard = await awaitNextUtterance();
       const ok = yn(heard);
       if (ok === true) {
         await submitToSheet();
@@ -294,10 +327,10 @@ export default function Demo() {
         router.push("/thank-you");
         return;
       } else if (ok === false) {
-        // Simple MVP: redo from name
+        // Simple MVP reset
         setAnswers({});
         await advanceServer("restart", "user_edit");
-        await speak("No problem. Let’s adjust that. We’ll start over. What’s your full name?");
+        await speak("No problem. We’ll start over.");
         return runFlow();
       } else {
         await speak("Please say yes to submit, or no to make a change.");
@@ -309,12 +342,12 @@ export default function Demo() {
     }
   }
 
-  /** ---- Start: single tap to unlock mic + audio + SR ---- */
+  /** ---- Start: unlock mic + audio + SR, then run ---- */
   const handleStart = async () => {
     setStarted(true);
     setHint("");
 
-    // Mic permission upfront (shows browser prompt once)
+    // Mic permission upfront
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(t => t.stop());
@@ -327,7 +360,6 @@ export default function Demo() {
     if (Ctx) {
       audioCtxRef.current = new Ctx();
       if (audioCtxRef.current?.state === "suspended") await audioCtxRef.current?.resume();
-
     }
 
     // SR instance
@@ -336,7 +368,7 @@ export default function Demo() {
       return;
     }
 
-    // Run the push-to-talk flow
+    // Kick off the autonomous conversation
     runFlow().catch(() => {
       setHint("Voice flow hit an error. Refresh to try again.");
     });
@@ -367,13 +399,13 @@ export default function Demo() {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="text-lg font-semibold tracking-tight">Formversation</div>
-          <div className="text-sm opacity-80">{started ? (listening ? "Listening…" : "Voice form") : "Ready"}</div>
+          <div className="text-sm opacity-80">
+            {started ? (listening ? "Listening…" : speaking ? "Speaking…" : "Voice form") : "Ready"}
+          </div>
         </div>
 
         {/* Prompt / live line */}
-        <div className="mb-6 leading-relaxed min-h-[2.5rem]">
-          {promptText}
-        </div>
+        <div className="mb-6 leading-relaxed min-h-[2.5rem]">{promptText}</div>
 
         {/* Start button (only before start) */}
         {!started && (
@@ -386,25 +418,24 @@ export default function Demo() {
               Start voice form
             </button>
             <p className="text-xs opacity-80 mt-3 text-center">
-              By clicking Start, you allow microphone access so our voice form agent can talk and listen.
+              We’ll talk and listen automatically. You can stop my voice anytime.
             </p>
           </>
         )}
 
-        {/* Push-to-talk control (shown after start) */}
+        {/* In-call controls */}
         {started && (
-          <div className="mt-2">
-            <button
-              onPointerDown={onHoldDown}
-              onPointerUp={onHoldUp}
-              onPointerLeave={onHoldUp}
-              className="w-full h-16 rounded-2xl font-semibold shadow-xl"
-              style={{ background: listening ? "linear-gradient(90deg,#EF4444,#F59E0B)" : "linear-gradient(90deg,#4F46E5,#00BFA6)", color: "#fff" }}
-            >
-              {listening ? "Release to stop" : "Hold to Answer"}
-            </button>
-            <p className="text-xs opacity-80 mt-2 text-center">
-              Press & hold while you speak, then release.
+          <div className="mt-2 space-y-3">
+            {speaking && (
+              <button
+                onClick={stopSpeaking}
+                className="w-full h-12 rounded-xl font-medium bg-gray-700 hover:bg-gray-600"
+              >
+                ✋ Stop Speaking
+              </button>
+            )}
+            <p className="text-xs opacity-80 mt-1 text-center">
+              I’ll ask a question, then listen. Speak normally after I finish.
             </p>
           </div>
         )}

@@ -1,0 +1,88 @@
+version: 1
+flow:
+  id: "early-access-v1"
+  name: "Formversation • Early Access Voice Intake"
+  start: "welcome"
+
+  meta:
+    sheet_map:
+      name: "A"
+      email: "B"
+      primary_goal: "C"
+      consent: "D"
+
+  steps:
+    welcome:
+      type: "message"
+      text: "Hey there! I’m Formversation — a quick voice form that takes about 30 seconds. Ready to begin?"
+      speak: "Hey there! I’m Formversation, your voice-powered form. This takes about thirty seconds. Ready to begin?"
+      next: "name"
+
+    name:
+      type: "text"
+      label: "What’s your full name?"
+      placeholder: "First and last name"
+      speak: "Great. First, what’s your full name?"
+      reask: "Could you share your first and last name?"
+      validate:
+        required: true
+        regex: "^[A-Za-z .'-]{2,60}$"
+        message: "Please share your first and last name."
+      confirm:
+        enabled: false
+      map: "name"
+      next: "email"
+
+    email:
+      type: "email"
+      label: "What’s the best email for your invite? You can say it like: eric at gmail dot com."
+      speak: "What’s the best email for your invite? You can say it like: eric at gmail dot com."
+      reask: "Hmm, that didn’t sound like a valid email. Try saying it like: name at company dot com."
+      hints:
+        stt_examples:
+          - "eric at gmail dot com"
+          - "my name at company dot io"
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "I heard {email}. Is that correct?"
+        yes_next: "primary_goal"
+        no_next: "email"
+      map: "email"
+      next: "primary_goal"
+
+    primary_goal:
+      type: "single_select"
+      label: "What’s your primary goal with Formversation?"
+      speak: "What’s your primary goal with Formversation? You can say Increase conversions, Cleaner data into CRM, Trigger automations faster, or All of the above."
+      options:
+        - { id: "conversion",   label: "Increase conversions", synonyms: ["more sales","higher conversions","conversion"] }
+        - { id: "data_quality", label: "Cleaner data into CRM", synonyms: ["data","data quality","clean data"] }
+        - { id: "automation",   label: "Trigger automations faster", synonyms: ["automation","automations","faster automation"] }
+        - { id: "all",          label: "All of the above", synonyms: ["all","everything","all of them"] }
+      reask: "Please choose one of the options, like Increase conversions or All of the above."
+      confirm:
+        enabled: true
+        prompt: "Got it: {primary_goal}. Correct?"
+        yes_next: "consent"
+        no_next: "primary_goal"
+      map: "primary_goal"
+      next: "consent"
+
+    consent:
+      type: "checkbox"
+      label: "Keep me posted and grant me early-supporter pricing — $15/month for life."
+      speak: "Last step: would you like early-supporter pricing at fifteen dollars a month for life? Say yes to agree."
+      options:
+        - { id: "agree", label: "I agree", required: true, synonyms: ["yes","yep","yeah","i agree","sure","ok","okay"] }
+      reask: "Please say yes if you’d like the early-supporter pricing."
+      confirm:
+        enabled: false
+      map: "consent"
+      next: "done"
+
+    done:
+      type: "completion"
+      text: "✅ You’re on the list! Watch your inbox for early access and founder updates. Thanks for supporting the future of forms."
+      speak: "You’re all set! Watch your inbox for early access and founder updates. Thanks for supporting the future of forms."

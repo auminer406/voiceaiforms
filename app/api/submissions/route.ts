@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { db } from '@/lib/db-with-auth';
+import { db } from '@/lib/db';
 
 // GET /api/submissions?formId=xxx
 export async function GET(request: NextRequest) {

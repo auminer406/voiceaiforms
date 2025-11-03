@@ -132,14 +132,14 @@ function DynamicVoiceForm() {
     }
   }
 
-  async function getNextStep(stepId: string, value: string) {
+  async function getNextStep(stepId: string, value: string, useFormId?: string) {
     try {
       const r = await fetch("/api/session/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           session_id: sessionId, 
-          form_id: currentFormId,
+          form_id: useFormId || currentFormId || formId,
           step_id: stepId, 
           value 
         }),
@@ -460,9 +460,9 @@ function DynamicVoiceForm() {
     }
   }
 
-  async function handleMessageStep(step: FlowStep, stepId: string): Promise<{ next_step_id: string; next_step: FlowStep } | null> {
+  async function handleMessageStep(step: FlowStep, stepId: string, useFormId: string): Promise<{ next_step_id: string; next_step: FlowStep } | null> {
     await speak(step.speak || step.text || "");
-    return await getNextStep(stepId, "");
+    return await getNextStep(stepId, "", useFormId);
   }
 
   async function handleCompletionStep(step: FlowStep): Promise<null> {
@@ -482,13 +482,14 @@ function DynamicVoiceForm() {
 
     let currentStepId = session.step_id;
     let currentStep = session.step;
+    const flowFormId = session.form_id; // Capture form_id from session
 
     while (currentStep) {
       let nextData = null;
 
       switch (currentStep.type) {
         case "message":
-          nextData = await handleMessageStep(currentStep, currentStepId);
+          nextData = await handleMessageStep(currentStep, currentStepId, flowFormId);
           break;
         case "text":
           nextData = await handleTextStep(currentStep, currentStepId);

@@ -1,9 +1,39 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-/** -------- Helpers -------- */
+interface FlowStep {
+  type: string;
+  label?: string;
+  speak?: string;
+  reask?: string;
+  validate?: {
+    required?: boolean;
+    regex?: string;
+    message?: string;
+  };
+  confirm?: {
+    enabled: boolean;
+    prompt?: string;
+  };
+  options?: Array<{
+    id: string;
+    label: string;
+    synonyms?: string[];
+  }>;
+  next?: string;
+  text?: string;
+  map?: string;
+}
+
+interface SessionData {
+  session_id: string;
+  form_id: string;
+  step_id: string;
+  step: FlowStep;
+}
+
 function normalizeEmailSpeech(input: string): string {
   let s = input.trim().toLowerCase();
   s = s.replace(/\s+at\s+/g, "@");
@@ -12,63 +42,132 @@ function normalizeEmailSpeech(input: string): string {
   s = s.replace(/[,;:]/g, "");
   return s;
 }
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
-function yn(s: string) {
+
+function yn(s: string): boolean | null {
   const a = s.trim().toLowerCase();
-  if (["yes","yeah","yep","sure","correct","ok","okay","affirmative","i agree"].includes(a)) return true;
-  if (["no","nope","nah","negative","not really","i don’t","i dont"].includes(a)) return false;
+  if (["yes", "yeah", "yep", "sure", "correct", "ok", "okay", "affirmative", "i agree"].includes(a)) return true;
+  if (["no", "nope", "nah", "negative", "not really", "i don't", "i dont"].includes(a)) return false;
   return null;
 }
-function fuzzyGoal(spoken: string): "conversion"|"data_quality"|"automation"|"all"|"" {
-  const s = spoken.toLowerCase();
-  if (s.includes("all")) return "all";
-  if (s.includes("conversion") || s.includes("sale")) return "conversion";
-  if (s.includes("data")) return "data_quality";
-  if (s.includes("automation") || s.includes("automations") || s.includes("trigger")) return "automation";
-  return "";
+
+function matchSynonym(spoken: string, options: Array<{ id: string; synonyms?: string[] }>): string | null {
+  const s = spoken.toLowerCase().trim();
+  for (const opt of options) {
+    if (!opt.synonyms) continue;
+    for (const syn of opt.synonyms) {
+      if (s.includes(syn.toLowerCase())) {
+        return opt.id;
+      }
+    }
+  }
+  return null;
 }
 
-/** -------- Page -------- */
-export default function Demo() {
-  const router = useRouter();
+function validateWithRegex(input: string, regex: string): boolean {
+  try {
+    const re = new RegExp(regex);
+    return re.test(input);
+  } catch {
+    return true;
+  }
+}
 
-  // UI/state
+export default function DynamicVoiceForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get formId from URL parameter, default to early-access-v1 for backward compatibility
+  const formId = searchParams.get('formId') || 'early-access-v1';
+
   const [started, setStarted] = useState(false);
   const [promptText, setPromptText] = useState("Ready when you are.");
   const [hint, setHint] = useState<string>("");
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
 
-  // answers
-  const [answers, setAnswers] = useState<{ name?: string; email?: string; goal?: string }>({});
+  const [sessionId, setSessionId] = useState("");
+  const [currentFormId, setCurrentFormId] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const answersRef = useRef(answers);
-  useEffect(() => { answersRef.current = answers; }, [answers]);
+  
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
-  // audio / SR
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const srRef = useRef<SpeechRecognition | null>(null);
+  const srRef = useRef<any>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // keep last asked prompt (for optional retry UX later)
-  const lastPromptRef = useRef<string>("");
+  const pendingResolveRef = useRef<((t: string) => void) | null>(null);
+  const pendingRejectRef = useRef<((e: any) => void) | null>(null);
 
-  // (Optional) lightweight server stubs
-  const [sessionId, setSessionId] = useState("");
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch("/api/session/init", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ flowId: "early-access-v1" }),
-        });
-        const j = await r.json();
-        setSessionId(j.session_id || "");
-      } catch { /* ok */ }
-    })();
-  }, []);
+  function clearPending() {
+    pendingResolveRef.current = null;
+    pendingRejectRef.current = null;
+    setListening(false);
+  }
 
-  /** ---- Interrupt TTS immediately ---- */
+  async function initSession() {
+    try {
+      const r = await fetch("/api/session/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ formId }),
+      });
+      
+      if (!r.ok) {
+        throw new Error(`Failed to load form: ${r.status}`);
+      }
+      
+      const data: SessionData = await r.json();
+      setSessionId(data.session_id);
+      setCurrentFormId(data.form_id);
+      return data;
+    } catch (e) {
+      console.error("Session init failed:", e);
+      setHint("Failed to load form. Please check the form ID and refresh.");
+      return null;
+    }
+  }
+
+  async function getNextStep(stepId: string, value: string) {
+    try {
+      const r = await fetch("/api/session/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          session_id: sessionId, 
+          form_id: currentFormId,
+          step_id: stepId, 
+          value 
+        }),
+      });
+      const data = await r.json();
+      return data;
+    } catch (e) {
+      console.error("Failed to get next step:", e);
+      return null;
+    }
+  }
+
+  async function submitForm() {
+    const a = answersRef.current;
+    try {
+      await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          form_id: currentFormId,
+          answers: a 
+        }),
+      });
+    } catch (e) {
+      console.error("Submit failed:", e);
+    }
+  }
+
   function stopSpeaking() {
     const a = audioRef.current;
     if (a) {
@@ -78,64 +177,67 @@ export default function Demo() {
     setSpeaking(false);
   }
 
-  /** ---- Speak (await until TTS finishes) ---- */
   async function speak(text: string) {
     setPromptText(text);
-    lastPromptRef.current = text;
-
-    // unlock autoplay
+    
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!audioCtxRef.current && Ctx) audioCtxRef.current = new Ctx();
     if (audioCtxRef.current?.state === "suspended") await audioCtxRef.current.resume();
 
-    const resp = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    if (!resp.ok) throw new Error("TTS failed");
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-
-    if (!audioRef.current) audioRef.current = new Audio();
-    const a = audioRef.current;
-    a.src = url;
-
-    setSpeaking(true);
-    await new Promise<void>((resolve) => {
-      a.onended = () => {
-        URL.revokeObjectURL(url);
-        setSpeaking(false);
-        resolve();
-      };
-      a.onpause = () => setSpeaking(false);
-      a.play().catch(() => {
-        setSpeaking(false);
-        resolve();
+    try {
+      const resp = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
       });
-    });
+      if (!resp.ok) throw new Error("TTS failed");
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+
+      if (!audioRef.current) audioRef.current = new Audio();
+      const a = audioRef.current;
+      a.src = url;
+
+      setSpeaking(true);
+      await new Promise<void>((resolve) => {
+        a.onended = () => {
+          URL.revokeObjectURL(url);
+          setSpeaking(false);
+          resolve();
+        };
+        a.onpause = () => setSpeaking(false);
+        a.play().catch(() => {
+          setSpeaking(false);
+          resolve();
+        });
+      });
+    } catch (e) {
+      console.error("TTS error:", e);
+      setSpeaking(false);
+    }
   }
 
-  /** ---- Create one SpeechRecognition instance ---- */
   function ensureSR(): boolean {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return false;
+    
     if (!srRef.current) {
-      const sr = new SR() as SpeechRecognition;
+      const sr = new SR();
       sr.lang = "en-US";
       sr.interimResults = false;
       sr.maxAlternatives = 1;
 
-      sr.onresult = (e: SpeechRecognitionEvent) => {
+      sr.onresult = (e: any) => {
         const t = (e.results?.[0]?.[0]?.transcript || "").trim();
-        // resolve captured below via closure
         pendingResolveRef.current?.(t);
         clearPending();
       };
+      
       sr.onerror = (e: any) => {
         pendingRejectRef.current?.(e);
         clearPending();
       };
+      
       sr.onend = () => {
         setListening(false);
       };
@@ -145,38 +247,18 @@ export default function Demo() {
     return true;
   }
 
-  /** ---- Await one utterance (auto-start SR after each speak) ---- */
-  const pendingResolveRef = useRef<((t: string) => void) | null>(null);
-  const pendingRejectRef = useRef<((e: any) => void) | null>(null);
-  function clearPending() {
-    pendingResolveRef.current = null;
-    pendingRejectRef.current = null;
-    setListening(false);
-  }
-
   async function awaitNextUtterance(timeoutMs = 12000): Promise<string> {
-    // stop TTS if still talking, then listen
     if (speaking) stopSpeaking();
 
     if (!ensureSR()) {
-      throw new Error("Speech recognition not available. Try Chrome desktop or iOS Safari.");
+      throw new Error("Speech recognition not available.");
     }
 
-    // ask mic if needed
-    try {
-      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-      s.getTracks().forEach(t => t.stop());
-    } catch {
-      throw new Error("Please allow microphone access.");
-    }
-
-    // start listening
     setListening(true);
 
     return new Promise<string>((resolve, reject) => {
       let done = false;
 
-      // attach resolvers for sr callbacks
       pendingResolveRef.current = (t: string) => {
         if (done) return;
         done = true;
@@ -188,10 +270,8 @@ export default function Demo() {
         reject(e);
       };
 
-      // start SR
-      try { srRef.current!.start(); } catch { /* already running */ }
+      try { srRef.current!.start(); } catch { }
 
-      // timeout protection
       const to = setTimeout(() => {
         if (done) return;
         done = true;
@@ -199,185 +279,282 @@ export default function Demo() {
         reject(new Error("timeout"));
       }, timeoutMs);
 
-      // ensure we clear when promise settles
-      const finalize = (result: "resolve" | "reject") => {
+      const finalize = () => {
         clearTimeout(to);
         clearPending();
       };
-      // wrap original resolvers to also finalize
+
       const origResolve = pendingResolveRef.current;
       const origReject = pendingRejectRef.current;
-      pendingResolveRef.current = (t: string) => { finalize("resolve"); origResolve?.(t); };
-      pendingRejectRef.current = (e: any) => { finalize("reject"); origReject?.(e); };
+
+      pendingResolveRef.current = (t: string) => {
+        finalize();
+        origResolve?.(t);
+      };
+
+      pendingRejectRef.current = (e: any) => {
+        finalize();
+        origReject?.(e);
+      };
     });
   }
 
-  /** ---- Server helpers (no-op safe) ---- */
-  async function advanceServer(step_id: string, value: any) {
-    if (!sessionId) return;
-    try {
-      await fetch("/api/session/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, step_id, value }),
-      });
-    } catch {}
-  }
-  async function submitToSheet() {
-    const a = answersRef.current;
-    try {
-      await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: a.name || "", email: a.email || "", goal: a.goal || "" }),
-      });
-    } catch {}
-  }
-
-  /** ---- Conversational, auto-listen flow ---- */
-  async function runFlow() {
-    // Welcome (no button instructions)
-    await speak("Hey there, I’m your voice form. Let’s get you set up.");
-
-    // NAME
+  async function handleTextStep(step: FlowStep, stepId: string): Promise<{ next_step_id: string; next_step: FlowStep } | null> {
     while (true) {
-      await speak("What’s your full name?");
+      await speak(step.speak || step.label || "Please speak your answer.");
+      
       try {
         const heard = await awaitNextUtterance();
-        if (!/^[A-Za-z .'\-]{2,60}$/.test(heard)) {
-          await speak("I didn’t quite catch that. Please say your first and last name.");
+        
+        if (step.validate?.regex && !validateWithRegex(heard, step.validate.regex)) {
+          await speak(step.validate.message || step.reask || "Let us try that again.");
           continue;
         }
-        setAnswers(a => ({ ...a, name: heard }));
-        await advanceServer("name", heard);
-        break;
-      } catch (e: any) {
-        await speak("No problem. Let’s try your name again.");
-      }
-    }
-
-    // EMAIL
-    while (true) {
-      await speak("What’s the best email for your invite? You can say it like eric at gmail dot com.");
-      try {
-        let heard = await awaitNextUtterance();
-        heard = normalizeEmailSpeech(heard);
-        if (!EMAIL_RE.test(heard)) {
-          await speak("That didn’t sound like a valid email. Please say it like name at company dot com.");
-          continue;
+        
+        if (step.confirm?.enabled) {
+          const confirmPrompt = step.confirm.prompt?.replace(`{${step.map}}`, heard) || `I heard ${heard}. Is that correct?`;
+          await speak(confirmPrompt);
+          
+          try {
+            const confirmHeard = await awaitNextUtterance();
+            const confirmed = yn(confirmHeard);
+            
+            if (confirmed === false) {
+              await speak("Let us try again.");
+              continue;
+            } else if (confirmed === null) {
+              await speak("Please say yes or no.");
+              continue;
+            }
+          } catch {
+            await speak("Please say yes or no.");
+            continue;
+          }
         }
-        setAnswers(a => ({ ...a, email: heard }));
-        await advanceServer("email", heard);
-        break;
+        
+        if (step.map) {
+          setAnswers((a) => ({ ...a, [step.map!]: heard }));
+        }
+        
+        return await getNextStep(stepId, heard);
       } catch {
-        await speak("Didn’t hear that email. Let’s try again.");
+        await speak("Let us try that again.");
       }
     }
+  }
 
-    // GOAL
+  async function handleEmailStep(step: FlowStep, stepId: string): Promise<{ next_step_id: string; next_step: FlowStep } | null> {
     while (true) {
-      await speak("What’s your primary goal with Formversation? Increase conversions, cleaner data into your CRM, trigger automations faster, or all of the above?");
+      await speak(step.speak || "What is your email?");
+      
       try {
         const heard = await awaitNextUtterance();
-        const g = fuzzyGoal(heard);
-        if (!g) {
-          await speak("Please choose one of the options, like increase conversions or all of the above.");
+        const normalized = normalizeEmailSpeech(heard);
+        
+        if (!EMAIL_RE.test(normalized)) {
+          await speak(step.reask || "That does not sound like a valid email. Try again.");
           continue;
         }
-        setAnswers(a => ({ ...a, goal: g }));
-        await advanceServer("primary_goal", g);
-        break;
+        
+        if (step.confirm?.enabled) {
+          const confirmPrompt = step.confirm.prompt?.replace(`{${step.map}}`, normalized) || `I heard ${normalized}. Is that correct?`;
+          await speak(confirmPrompt);
+          
+          try {
+            const confirmHeard = await awaitNextUtterance();
+            const confirmed = yn(confirmHeard);
+            
+            if (confirmed === false) {
+              await speak("Let us try the email again.");
+              continue;
+            } else if (confirmed === null) {
+              await speak("Please say yes or no.");
+              continue;
+            }
+          } catch {
+            await speak("Please say yes or no.");
+            continue;
+          }
+        }
+        
+        if (step.map) {
+          setAnswers((a) => ({ ...a, [step.map!]: normalized }));
+        }
+        
+        return await getNextStep(stepId, normalized);
       } catch {
-        await speak("I didn’t catch that. Let’s try your goal again.");
+        await speak("Let us try that again.");
       }
     }
+  }
 
-    // CONSENT (optional)
+  async function handleSingleSelectStep(step: FlowStep, stepId: string): Promise<{ next_step_id: string; next_step: FlowStep } | null> {
     while (true) {
-      await speak("Would you like early supporter pricing at fifteen dollars a month for life? Please say yes or no.");
+      await speak(step.speak || "Please choose an option.");
+      
       try {
         const heard = await awaitNextUtterance();
-        const ok = yn(heard);
-        if (ok === null) {
-          await speak("Please say yes or no.");
+        const matched = step.options ? matchSynonym(heard, step.options) : null;
+        
+        if (!matched) {
+          await speak(step.reask || "Please choose one of the options.");
           continue;
         }
-        await advanceServer("consent", ok ? "agree" : "");
-        break;
+        
+        if (step.confirm?.enabled) {
+          const selectedLabel = step.options?.find(o => o.id === matched)?.label || matched;
+          const confirmPrompt = step.confirm.prompt?.replace(`{${step.map}}`, selectedLabel) || `You chose ${selectedLabel}. Correct?`;
+          await speak(confirmPrompt);
+          
+          try {
+            const confirmHeard = await awaitNextUtterance();
+            const confirmed = yn(confirmHeard);
+            
+            if (confirmed === false) {
+              await speak("Let us choose again.");
+              continue;
+            } else if (confirmed === null) {
+              await speak("Please say yes or no.");
+              continue;
+            }
+          } catch {
+            await speak("Please say yes or no.");
+            continue;
+          }
+        }
+        
+        if (step.map) {
+          setAnswers((a) => ({ ...a, [step.map!]: matched }));
+        }
+        
+        return await getNextStep(stepId, matched);
+      } catch {
+        await speak("Let us try again.");
+      }
+    }
+  }
+
+  async function handleCheckboxStep(step: FlowStep, stepId: string): Promise<{ next_step_id: string; next_step: FlowStep } | null> {
+    while (true) {
+      await speak(step.speak || "Do you agree?");
+      
+      try {
+        const heard = await awaitNextUtterance();
+        const agreed = yn(heard);
+        
+        if (agreed === null) {
+          await speak(step.reask || "Please say yes or no.");
+          continue;
+        }
+        
+        const value = agreed ? "agree" : "";
+        
+        if (step.map) {
+          setAnswers((a) => ({ ...a, [step.map!]: value }));
+        }
+        
+        return await getNextStep(stepId, value);
       } catch {
         await speak("Please say yes or no.");
       }
     }
+  }
 
-    // REVIEW + CONFIRM
-    const a = answersRef.current;
-    const goalText =
-      a.goal === "conversion" ? "increase conversions" :
-      a.goal === "data_quality" ? "cleaner data into your CRM" :
-      a.goal === "automation" ? "trigger automations faster" :
-      a.goal === "all" ? "all of the above" : "no goal selected";
+  async function handleMessageStep(step: FlowStep, stepId: string): Promise<{ next_step_id: string; next_step: FlowStep } | null> {
+    await speak(step.speak || step.text || "");
+    return await getNextStep(stepId, "");
+  }
 
-    await speak(`Here’s what I have: ${a.name || "unknown name"}, ${a.email || "unknown email"}, goal: ${goalText}. Are we ready to submit? Please say yes or no.`);
-    try {
-      const heard = await awaitNextUtterance();
-      const ok = yn(heard);
-      if (ok === true) {
-        await submitToSheet();
-        await speak("You’re all set. Check your inbox for early access. Redirecting now.");
-        router.push("/thank-you");
-        return;
-      } else if (ok === false) {
-        // Simple MVP reset
-        setAnswers({});
-        await advanceServer("restart", "user_edit");
-        await speak("No problem. We’ll start over.");
-        return runFlow();
-      } else {
-        await speak("Please say yes to submit, or no to make a change.");
-        return runFlow();
+  async function handleCompletionStep(step: FlowStep): Promise<null> {
+    await submitForm();
+    await speak(step.speak || step.text || "Thank you! You are all set.");
+    
+    setTimeout(() => {
+      router.push("/thank-you");
+    }, 2000);
+    
+    return null;
+  }
+
+  async function runDynamicFlow() {
+    const session = await initSession();
+    if (!session) return;
+
+    let currentStepId = session.step_id;
+    let currentStep = session.step;
+
+    while (currentStep) {
+      let nextData = null;
+
+      switch (currentStep.type) {
+        case "message":
+          nextData = await handleMessageStep(currentStep, currentStepId);
+          break;
+        case "text":
+          nextData = await handleTextStep(currentStep, currentStepId);
+          break;
+        case "email":
+          nextData = await handleEmailStep(currentStep, currentStepId);
+          break;
+        case "single_select":
+          nextData = await handleSingleSelectStep(currentStep, currentStepId);
+          break;
+        case "checkbox":
+          nextData = await handleCheckboxStep(currentStep, currentStepId);
+          break;
+        case "completion":
+          await handleCompletionStep(currentStep);
+          return;
+        default:
+          console.warn(`Unknown step type: ${currentStep.type}`);
+          await speak("Something went wrong. Please refresh.");
+          return;
       }
-    } catch {
-      await speak("I didn’t hear that. Say yes to submit, or no to make a change.");
-      return runFlow();
+
+      if (!nextData || !nextData.next_step) {
+        break;
+      }
+
+      currentStepId = nextData.next_step_id;
+      currentStep = nextData.next_step;
     }
   }
 
-  /** ---- Start: unlock mic + audio + SR, then run ---- */
   const handleStart = async () => {
     setStarted(true);
     setHint("");
 
-    // Mic permission upfront
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop());
+      stream.getTracks().forEach((t) => t.stop());
     } catch {
       setHint("Please allow microphone access to continue.");
-    }
-
-    // Autoplay unlock
-    const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (Ctx) {
-      audioCtxRef.current = new Ctx();
-      if (audioCtxRef.current?.state === "suspended") await audioCtxRef.current?.resume();
-    }
-
-    // SR instance
-    if (!ensureSR()) {
-      setHint("Speech recognition not available. Try Chrome desktop or iOS Safari.");
+      setStarted(false);
       return;
     }
 
-    // Kick off the autonomous conversation
-    runFlow().catch(() => {
+    const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (Ctx) {
+      audioCtxRef.current = new Ctx();
+      if (audioCtxRef.current?.state === "suspended") {
+        await audioCtxRef.current.resume();
+      }
+    }
+
+    if (!ensureSR()) {
+      setHint("Speech recognition not available. Try Chrome desktop or iOS Safari.");
+      setStarted(false);
+      return;
+    }
+
+    runDynamicFlow().catch((e) => {
+      console.error("Flow error:", e);
       setHint("Voice flow hit an error. Refresh to try again.");
     });
   };
 
-  /** ---- UI ---- */
   return (
     <main className="min-h-screen relative bg-slate-950 text-white flex items-center justify-center p-6">
-      {/* Background */}
       <div
         className="pointer-events-none absolute inset-0 opacity-50"
         style={{
@@ -386,7 +563,6 @@ export default function Demo() {
         }}
       />
 
-      {/* Glass card */}
       <div
         className="w-full max-w-xl relative rounded-2xl p-6"
         style={{
@@ -396,18 +572,15 @@ export default function Demo() {
           boxShadow: "0 20px 60px rgba(0,0,0,.45)",
         }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="text-lg font-semibold tracking-tight">Formversation</div>
           <div className="text-sm opacity-80">
-            {started ? (listening ? "Listening…" : speaking ? "Speaking…" : "Voice form") : "Ready"}
+            {started ? (listening ? "Listening..." : speaking ? "Speaking..." : "Voice form") : "Ready"}
           </div>
         </div>
 
-        {/* Prompt / live line */}
         <div className="mb-6 leading-relaxed min-h-[2.5rem]">{promptText}</div>
 
-        {/* Start button (only before start) */}
         {!started && (
           <>
             <button
@@ -418,29 +591,40 @@ export default function Demo() {
               Start voice form
             </button>
             <p className="text-xs opacity-80 mt-3 text-center">
-              We’ll talk and listen automatically. You can stop my voice anytime.
+              We will talk and listen automatically. Speak after I finish.
             </p>
           </>
         )}
 
-        {/* In-call controls */}
         {started && (
-          <div className="mt-2 space-y-3">
+          <div className="mt-4 p-4 bg-white/5 rounded-xl text-center">
+            {listening && (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-sm">Listening...</span>
+              </div>
+            )}
+            {speaking && (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm">Speaking...</span>
+              </div>
+            )}
+            {!listening && !speaking && (
+              <span className="text-sm opacity-60">Processing...</span>
+            )}
             {speaking && (
               <button
                 onClick={stopSpeaking}
-                className="w-full h-12 rounded-xl font-medium bg-gray-700 hover:bg-gray-600"
+                className="mt-3 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm"
               >
-                ✋ Stop Speaking
+                Stop Speaking
               </button>
             )}
-            <p className="text-xs opacity-80 mt-1 text-center">
-              I’ll ask a question, then listen. Speak normally after I finish.
-            </p>
           </div>
         )}
 
-        {!!hint && <p className="text-xs opacity-80 mt-4">{hint}</p>}
+        {!!hint && <p className="text-xs opacity-80 mt-4 text-center text-red-400">{hint}</p>}
       </div>
     </main>
   );

@@ -152,14 +152,14 @@ function DynamicVoiceForm() {
     }
   }
 
-  async function submitForm() {
+  async function submitForm(useFormId?: string) {
     const a = answersRef.current;
     try {
       await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          form_id: currentFormId,
+          form_id: useFormId || currentFormId || formId,
           answers: a 
         }),
       });
@@ -465,8 +465,8 @@ function DynamicVoiceForm() {
     return await getNextStep(stepId, "", useFormId);
   }
 
-  async function handleCompletionStep(step: FlowStep): Promise<null> {
-    await submitForm();
+  async function handleCompletionStep(step: FlowStep, useFormId: string): Promise<null> {
+    await submitForm(useFormId);
     await speak(step.speak || step.text || "Thank you! You are all set.");
     
     setTimeout(() => {
@@ -504,7 +504,7 @@ function DynamicVoiceForm() {
           nextData = await handleCheckboxStep(currentStep, currentStepId);
           break;
         case "completion":
-          await handleCompletionStep(currentStep);
+          await handleCompletionStep(currentStep, flowFormId);
           return;
         default:
           console.warn(`Unknown step type: ${currentStep.type}`);

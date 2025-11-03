@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { db } from '@/lib/db-with-auth';
+import { db } from '@/lib/db';
 
 // GET /api/submissions?formId=xxx
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const formId = searchParams.get('formId');
 
@@ -21,8 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // This will automatically verify ownership
-    const submissions = await db.getSubmissions(formId, userId);
+    const submissions = await db.getSubmissions(formId);
     return NextResponse.json(submissions);
   } catch (error) {
     console.error('GET /api/submissions error:', error);

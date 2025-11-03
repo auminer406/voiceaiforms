@@ -90,7 +90,7 @@ export default function ThankYou() {
         </div>
 
         <p className="text-xs opacity-60 mt-8">
-          Early supporters get $15/month pricing for life when we launch!
+          Early supporters get $25 PRO for life - during pre-launch!
         </p>
       </div>
     </main>

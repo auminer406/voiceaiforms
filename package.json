@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate": "tsx scripts/migrate-existing-forms.ts"
+    "migrate": "tsx --env-file .env.local scripts/migrate-existing-forms.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.34.1",
     "@vercel/postgres": "^0.10.0",
+    "dotenv": "^17.2.3",
     "git": "^0.1.5",
     "next": "16.0.1",
     "react": "19.2.0",

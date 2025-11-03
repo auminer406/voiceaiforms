@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { db } from '@/lib/db-with-auth';
+import { db } from '@/lib/db';
 
-// GET /api/forms - List user's forms
-// GET /api/forms?id=xxx - Get specific form (if user owns it)
+// GET /api/forms - List all forms
+// GET /api/forms?id=xxx - Get specific form
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
     const slug = searchParams.get('slug');
@@ -21,12 +14,6 @@ export async function GET(request: NextRequest) {
       if (!form) {
         return NextResponse.json({ error: 'Form not found' }, { status: 404 });
       }
-      
-      // Verify ownership
-      if (form.user_id !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-      }
-      
       return NextResponse.json(form);
     }
 
@@ -35,17 +22,10 @@ export async function GET(request: NextRequest) {
       if (!form) {
         return NextResponse.json({ error: 'Form not found' }, { status: 404 });
       }
-      
-      // Verify ownership
-      if (form.user_id !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-      }
-      
       return NextResponse.json(form);
     }
 
-    // Get all user's forms
-    const forms = await db.getAllForms(userId);
+    const forms = await db.getAllForms();
     return NextResponse.json(forms);
   } catch (error) {
     console.error('GET /api/forms error:', error);
@@ -56,12 +36,6 @@ export async function GET(request: NextRequest) {
 // POST /api/forms - Create new form
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { name, slug, yaml_config, webhook_url } = body;
 
@@ -84,7 +58,6 @@ export async function POST(request: NextRequest) {
     }
 
     const form = await db.createForm({
-      user_id: userId,
       name,
       slug,
       yaml_config,
@@ -108,12 +81,6 @@ export async function POST(request: NextRequest) {
 // PUT /api/forms - Update existing form
 export async function PUT(request: NextRequest) {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { id, name, slug, yaml_config, webhook_url } = body;
 
@@ -137,7 +104,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const form = await db.updateForm(id, userId, {
+    const form = await db.updateForm(id, {
       name,
       slug,
       yaml_config,
@@ -146,7 +113,7 @@ export async function PUT(request: NextRequest) {
 
     if (!form) {
       return NextResponse.json(
-        { error: 'Form not found or unauthorized' },
+        { error: 'Form not found or update failed' },
         { status: 404 }
       );
     }
@@ -161,12 +128,6 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/forms?id=xxx - Delete form
 export async function DELETE(request: NextRequest) {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
 
@@ -177,11 +138,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const success = await db.deleteForm(id, userId);
+    const success = await db.deleteForm(id);
 
     if (!success) {
       return NextResponse.json(
-        { error: 'Form not found or unauthorized' },
+        { error: 'Form not found or delete failed' },
         { status: 404 }
       );
     }

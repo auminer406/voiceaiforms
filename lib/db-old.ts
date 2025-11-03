@@ -2,7 +2,6 @@ import { sql } from '@vercel/postgres';
 
 export interface Form {
   id: string;
-  user_id: string | null;
   name: string;
   slug: string | null;
   yaml_config: string;
@@ -21,7 +20,7 @@ export interface Submission {
 }
 
 export const db = {
-  // Get form by ID (public - for form filling)
+  // Get form by ID
   async getForm(id: string): Promise<Form | null> {
     try {
       const result = await sql<Form>`
@@ -51,12 +50,12 @@ export const db = {
     }
   },
 
-  // Get all forms for a specific user
-  async getAllForms(userId: string): Promise<Form[]> {
+  // Get all forms
+  async getAllForms(): Promise<Form[]> {
     try {
       const result = await sql<Form>`
         SELECT * FROM forms 
-        WHERE is_active = true AND user_id = ${userId}
+        WHERE is_active = true
         ORDER BY created_at DESC
       `;
       return result.rows;
@@ -66,9 +65,8 @@ export const db = {
     }
   },
 
-  // Create new form with user_id
+  // Create new form
   async createForm(data: {
-    user_id: string;
     name: string;
     slug?: string;
     yaml_config: string;
@@ -76,8 +74,8 @@ export const db = {
   }): Promise<Form | null> {
     try {
       const result = await sql<Form>`
-        INSERT INTO forms (user_id, name, slug, yaml_config, webhook_url)
-        VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null})
+        INSERT INTO forms (name, slug, yaml_config, webhook_url)
+        VALUES (${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null})
         RETURNING *
       `;
       return result.rows[0] || null;
@@ -87,8 +85,8 @@ export const db = {
     }
   },
 
-  // Update form (must be owner)
-  async updateForm(id: string, userId: string, data: {
+  // Update form
+  async updateForm(id: string, data: {
     name?: string;
     slug?: string;
     yaml_config?: string;
@@ -117,13 +115,12 @@ export const db = {
       }
 
       updates.push(`updated_at = CURRENT_TIMESTAMP`);
-      values.push(userId);
       values.push(id);
 
       const query = `
         UPDATE forms 
         SET ${updates.join(', ')}
-        WHERE user_id = $${paramCount++} AND id = $${paramCount}
+        WHERE id = $${paramCount}
         RETURNING *
       `;
 
@@ -135,31 +132,17 @@ export const db = {
     }
   },
 
-  // Delete form (must be owner)
-  async deleteForm(id: string, userId: string): Promise<boolean> {
+  // Delete form (soft delete)
+  async deleteForm(id: string): Promise<boolean> {
     try {
       await sql`
         UPDATE forms 
         SET is_active = false, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id} AND user_id = ${userId}
+        WHERE id = ${id}
       `;
       return true;
     } catch (error) {
       console.error('Error deleting form:', error);
-      return false;
-    }
-  },
-
-  // Verify form ownership
-  async verifyFormOwnership(formId: string, userId: string): Promise<boolean> {
-    try {
-      const result = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM forms 
-        WHERE id = ${formId} AND user_id = ${userId} AND is_active = true
-      `;
-      return parseInt(result.rows[0]?.count || '0') > 0;
-    } catch (error) {
-      console.error('Error verifying form ownership:', error);
       return false;
     }
   },
@@ -183,15 +166,9 @@ export const db = {
     }
   },
 
-  // Get submissions for a form (must be owner)
-  async getSubmissions(formId: string, userId: string, limit: number = 100): Promise<Submission[]> {
+  // Get submissions for a form
+  async getSubmissions(formId: string, limit: number = 100): Promise<Submission[]> {
     try {
-      // First verify ownership
-      const isOwner = await this.verifyFormOwnership(formId, userId);
-      if (!isOwner) {
-        return [];
-      }
-
       const result = await sql<Submission>`
         SELECT * FROM submissions 
         WHERE form_id = ${formId}
@@ -206,14 +183,8 @@ export const db = {
   },
 
   // Get submission count for a form
-  async getSubmissionCount(formId: string, userId: string): Promise<number> {
+  async getSubmissionCount(formId: string): Promise<number> {
     try {
-      // First verify ownership
-      const isOwner = await this.verifyFormOwnership(formId, userId);
-      if (!isOwner) {
-        return 0;
-      }
-
       const result = await sql<{ count: string }>`
         SELECT COUNT(*) as count FROM submissions 
         WHERE form_id = ${formId}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface FlowStep {
@@ -74,7 +74,7 @@ function validateWithRegex(input: string, regex: string): boolean {
   }
 }
 
-export default function DynamicVoiceForm() {
+function DynamicVoiceForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -627,5 +627,17 @@ export default function DynamicVoiceForm() {
         {!!hint && <p className="text-xs opacity-80 mt-4 text-center text-red-400">{hint}</p>}
       </div>
     </main>
+  );
+}
+
+export default function DemoPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen relative bg-slate-950 text-white flex items-center justify-center p-6">
+        <div className="text-center">Loading...</div>
+      </main>
+    }>
+      <DynamicVoiceForm />
+    </Suspense>
   );
 }

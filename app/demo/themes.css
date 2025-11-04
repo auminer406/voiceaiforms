@@ -6,6 +6,12 @@
   backdrop-filter: blur(22px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+}
+
+.voice-form-theme-dark .voice-form-button {
+  background: linear-gradient(90deg, #00BFA6, #4F46E5);
+  color: #ffffff;
 }
 
 /* Light Theme */
@@ -15,6 +21,11 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   color: #0f172a;
+}
+
+.voice-form-theme-light .voice-form-button {
+  background: linear-gradient(90deg, #00BFA6, #4F46E5);
+  color: #ffffff;
 }
 
 .voice-form-theme-light .voice-form-status {
@@ -28,15 +39,28 @@
   backdrop-filter: blur(30px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
 }
 
-/* Brand Theme */
+.voice-form-theme-glass .voice-form-button {
+  background: linear-gradient(90deg, rgba(0, 191, 166, 0.8), rgba(79, 70, 229, 0.8));
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+}
+
+/* Brand Theme (Your gradient colors) */
 .voice-form-theme-brand {
   background: linear-gradient(135deg, rgba(0, 191, 166, 0.15), rgba(79, 70, 229, 0.15));
   backdrop-filter: blur(22px);
   border: 2px solid;
   border-image: linear-gradient(90deg, #00BFA6, #4F46E5) 1;
   box-shadow: 0 20px 60px rgba(79, 70, 229, 0.3);
+  color: #ffffff;
+}
+
+.voice-form-theme-brand .voice-form-button {
+  background: linear-gradient(90deg, #00BFA6, #4F46E5);
+  color: #ffffff;
 }
 
 /* Minimal Theme */
@@ -46,6 +70,11 @@
   border: 2px solid #e2e8f0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   color: #1e293b;
+}
+
+.voice-form-theme-minimal .voice-form-button {
+  background: #1e293b;
+  color: #ffffff;
 }
 
 .voice-form-theme-minimal .voice-form-status {

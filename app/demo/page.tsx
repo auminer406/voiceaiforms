@@ -180,9 +180,20 @@ function DynamicVoiceForm() {
   async function speak(text: string) {
     setPromptText(text);
     
+    // Ensure AudioContext exists and is resumed
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (!audioCtxRef.current && Ctx) audioCtxRef.current = new Ctx();
-    if (audioCtxRef.current?.state === "suspended") await audioCtxRef.current.resume();
+    if (!audioCtxRef.current && Ctx) {
+      audioCtxRef.current = new Ctx();
+    }
+    
+    // Critical for iOS: Always try to resume before playing
+    if (audioCtxRef.current?.state === "suspended") {
+      try {
+        await audioCtxRef.current.resume();
+      } catch (e) {
+        console.warn("Audio context resume failed:", e);
+      }
+    }
 
     try {
       const resp = await fetch("/api/tts", {
@@ -199,6 +210,8 @@ function DynamicVoiceForm() {
       a.src = url;
 
       setSpeaking(true);
+      
+      // iOS requires explicit play() call from user gesture context
       await new Promise<void>((resolve) => {
         a.onended = () => {
           URL.revokeObjectURL(url);
@@ -206,7 +219,13 @@ function DynamicVoiceForm() {
           resolve();
         };
         a.onpause = () => setSpeaking(false);
-        a.play().catch(() => {
+        a.onerror = () => {
+          console.error("Audio playback error");
+          setSpeaking(false);
+          resolve();
+        };
+        a.play().catch((e) => {
+          console.error("Play failed:", e);
           setSpeaking(false);
           resolve();
         });
@@ -525,6 +544,14 @@ function DynamicVoiceForm() {
     setStarted(true);
     setHint("");
 
+    // 1. Check Speech Recognition FIRST (before audio setup)
+    if (!ensureSR()) {
+      setHint("Speech recognition not available. Try Chrome desktop or iOS Safari.");
+      setStarted(false);
+      return;
+    }
+
+    // 2. Request microphone permission
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop());
@@ -534,23 +561,27 @@ function DynamicVoiceForm() {
       return;
     }
 
+    // 3. Initialize Audio Context LAST (after permissions granted)
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (Ctx) {
-      audioCtxRef.current = new Ctx();
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new Ctx();
+      }
+      // iOS Safari requires user interaction to resume AudioContext
       if (audioCtxRef.current?.state === "suspended") {
-        await audioCtxRef.current.resume();
+        try {
+          await audioCtxRef.current.resume();
+        } catch (e) {
+          console.warn("Could not resume audio context:", e);
+        }
       }
     }
 
-    if (!ensureSR()) {
-      setHint("Speech recognition not available. Try Chrome desktop or iOS Safari.");
-      setStarted(false);
-      return;
-    }
-
+    // 4. Start the flow
     runDynamicFlow().catch((e) => {
       console.error("Flow error:", e);
       setHint("Voice flow hit an error. Refresh to try again.");
+      setStarted(false);
     });
   };
 

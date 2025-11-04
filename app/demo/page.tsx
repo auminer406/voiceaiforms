@@ -78,14 +78,16 @@ function DynamicVoiceForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Get formId from URL parameter, default to early-access-v1 for backward compatibility
+  // Get formId and theme from URL parameters
   const formId = searchParams.get('formId') || 'early-access-v1';
+  const urlTheme = searchParams.get('theme') || 'dark';
 
   const [started, setStarted] = useState(false);
   const [promptText, setPromptText] = useState("Ready when you are.");
   const [hint, setHint] = useState<string>("");
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [theme, setTheme] = useState(urlTheme);
 
   const [sessionId, setSessionId] = useState("");
   const [currentFormId, setCurrentFormId] = useState("");
@@ -501,7 +503,7 @@ function DynamicVoiceForm() {
 
     let currentStepId = session.step_id;
     let currentStep = session.step;
-    const flowFormId = session.form_id; // Capture form_id from session
+    const flowFormId = session.form_id;
 
     while (currentStep) {
       let nextData = null;
@@ -595,15 +597,7 @@ function DynamicVoiceForm() {
         }}
       />
 
-      <div
-        className="w-full max-w-xl relative rounded-2xl p-6"
-        style={{
-          background: "rgba(255,255,255,0.08)",
-          backdropFilter: "blur(22px)",
-          border: "1px solid rgba(255,255,255,0.2)",
-          boxShadow: "0 20px 60px rgba(0,0,0,.45)",
-        }}
-      >
+      <div className={`w-full max-w-xl relative rounded-2xl p-6 voice-form-theme-${theme}`}>
         <div className="flex items-center justify-between mb-5">
           <div className="text-lg font-semibold tracking-tight">Formversation</div>
           <div className="text-sm opacity-80">
@@ -617,7 +611,7 @@ function DynamicVoiceForm() {
           <>
             <button
               onClick={handleStart}
-              className="w-full h-14 rounded-2xl font-semibold shadow-xl"
+              className="voice-form-button w-full h-14 rounded-2xl font-semibold shadow-xl"
               style={{ background: "linear-gradient(90deg,#00BFA6,#4F46E5)", color: "#fff" }}
             >
               Start voice form
@@ -629,7 +623,7 @@ function DynamicVoiceForm() {
         )}
 
         {started && (
-          <div className="mt-4 p-4 bg-white/5 rounded-xl text-center">
+          <div className="voice-form-status mt-4 p-4 bg-white/5 rounded-xl text-center">
             {listening && (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>

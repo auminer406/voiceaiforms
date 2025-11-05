@@ -1,98 +1,176 @@
-"use client";
+'use client';
 
-export default function ThankYou() {
-  const shareText = encodeURIComponent("I just filled out a form by TALKING to it! Check out this voice AI form - the future of data collection");
-  const shareUrl = encodeURIComponent("https://hello.formversation.com");
-  
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText("https://hello.formversation.com");
-    alert("Link copied! Share it anywhere you like!");
-  };
-  
-  return (
-    <main className="min-h-screen relative bg-slate-950 text-white flex items-center justify-center p-6">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-50"
-        style={{
-          background:
-            "radial-gradient(60% 40% at 20% 10%, rgba(79,70,229,.35), transparent), radial-gradient(50% 35% at 80% 30%, rgba(0,191,166,.28), transparent)",
-        }}
-      />
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
-      <div
-        className="w-full max-w-xl relative rounded-2xl p-8 text-center"
-        style={{
-          background: "rgba(255,255,255,0.08)",
-          backdropFilter: "blur(22px)",
-          border: "1px solid rgba(255,255,255,0.2)",
-          boxShadow: "0 20px 60px rgba(0,0,0,.45)",
-        }}
-      >
-        <div className="mb-6">
-          <div className="text-6xl mb-4">🎉</div>
-          <h1 className="text-3xl font-bold mb-3">You are all set!</h1>
-          <p className="text-lg opacity-90">
-            Watch your inbox for early access and founder updates.
-          </p>
-        </div>
+export default function ThankYouPage() {
+  const searchParams = useSearchParams();
+  const [isPayment, setIsPayment] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-        <div className="my-8 p-4 bg-white/5 rounded-xl border border-white/10">
-          <p className="text-sm font-semibold mb-3">
-            You just experienced the future of forms
-          </p>
-          <p className="text-xs opacity-80">
-            No typing. No clicking through endless fields. Just talk.
-          </p>
-        </div>
+  useEffect(() => {
+    // Check if this is a payment success (has Stripe session_id)
+    const sessionId = searchParams.get('session_id');
+    setIsPayment(!!sessionId);
+    setIsLoading(false);
+  }, [searchParams]);
 
-        <div className="space-y-3">
-          <p className="text-sm font-medium mb-4">
-            Think this was pretty cool? Help us spread the word!
-          </p>
-          
-          <a
-            href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105"
-            style={{ background: "linear-gradient(90deg,#1DA1F2,#1a8cd8)", color: "#fff" }}
-          >
-            Share on X Twitter
-          </a>
-
-          <a
-            href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105"
-            style={{ background: "linear-gradient(90deg,#0077B5,#005885)", color: "#fff" }}
-          >
-            Share on LinkedIn
-          </a>
-
-          <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105"
-            style={{ background: "linear-gradient(90deg,#4267B2,#365899)", color: "#fff" }}
-          >
-            Share on Facebook
-          </a>
-
-          <button
-            onClick={handleCopyLink}
-            className="block w-full px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 border border-white/20"
-            style={{ background: "rgba(255,255,255,0.1)", color: "#fff" }}
-          >
-            Copy Link
-          </button>
-        </div>
-
-        <p className="text-xs opacity-60 mt-8">
-          Early supporters get $25 PRO for life - during pre-launch!
-        </p>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-900 via-slate-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
       </div>
-    </main>
+    );
+  }
+
+  // Payment Success Page
+  if (isPayment) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-900 via-slate-900 to-indigo-900 text-white">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-2xl mx-auto text-center">
+            {/* Success Icon */}
+            <div className="w-24 h-24 mx-auto mb-8 bg-teal-500/20 rounded-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Welcome to the Club! 🎉
+            </h1>
+
+            <p className="text-xl text-slate-300 mb-8">
+              You're now a lifetime Pro member. Your account has been activated.
+            </p>
+
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 mb-8">
+              <h2 className="text-2xl font-semibold mb-4">What's Next?</h2>
+              
+              <div className="space-y-4 text-left">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">1️⃣</span>
+                  <div>
+                    <h3 className="font-semibold mb-1">Create Your First Voice Form</h3>
+                    <p className="text-slate-400">Head to your dashboard and start building</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">2️⃣</span>
+                  <div>
+                    <h3 className="font-semibold mb-1">Join Our Community</h3>
+                    <p className="text-slate-400">Get tips, templates, and support from other founders</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">3️⃣</span>
+                  <div>
+                    <h3 className="font-semibold mb-1">Check Your Email</h3>
+                    <p className="text-slate-400">We've sent you a welcome guide with pro tips</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/forms"
+                className="px-8 py-4 bg-gradient-to-r from-teal-500 to-indigo-600 rounded-lg font-semibold hover:from-teal-600 hover:to-indigo-700 transition"
+              >
+                Go to Dashboard →
+              </Link>
+              <a
+                href="https://discord.gg/YOUR_DISCORD_LINK"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-slate-800/50 border border-slate-700 rounded-lg font-semibold hover:bg-slate-700/50 transition"
+              >
+                Join Discord Community
+              </a>
+            </div>
+
+            <p className="text-sm text-slate-400 mt-8">
+              Questions? Email us at support@voiceaiforms.com
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Demo Completion Page (with social sharing)
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-teal-900 via-slate-900 to-indigo-900 text-white">
+      <div className="container mx-auto px-4 py-20">
+        <div className="max-w-2xl mx-auto text-center">
+          {/* Success Icon */}
+          <div className="w-24 h-24 mx-auto mb-8 bg-teal-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-12 h-12 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Thanks for Trying VoiceAIForms! 🎤
+          </h1>
+
+          <p className="text-xl text-slate-300 mb-8">
+            Pretty cool, right? Imagine using this for your own forms.
+          </p>
+
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Ready to Build Your Own?</h2>
+            
+            <p className="text-slate-300 mb-6">
+              Join 1000 founders getting <strong className="text-teal-400">lifetime Pro access for just $25</strong>
+            </p>
+
+            <Link
+              href="/"
+              className="inline-block px-8 py-4 bg-gradient-to-r from-teal-500 to-indigo-600 rounded-lg font-semibold hover:from-teal-600 hover:to-indigo-700 transition"
+            >
+              Claim Your Spot - $25 →
+            </Link>
+
+            <p className="text-sm text-slate-400 mt-4">
+              Worth $588/year. Yours for $25. Forever.
+            </p>
+          </div>
+
+          {/* Social Sharing */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Share with Your Network</h3>
+            
+            <div className="flex gap-3 justify-center">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Just tried @VoiceAIForms - voice forms are the future! Check it out:')}&url=${encodeURIComponent('https://voiceaiforms.com')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-[#1DA1F2] rounded-lg font-semibold hover:bg-[#1a8cd8] transition"
+              >
+                Share on Twitter
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://voiceaiforms.com')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-[#0077B5] rounded-lg font-semibold hover:bg-[#006399] transition"
+              >
+                Share on LinkedIn
+              </a>
+            </div>
+          </div>
+
+          <div className="text-sm text-slate-400">
+            <Link href="/" className="hover:text-white transition">
+              ← Back to Homepage
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

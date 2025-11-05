@@ -32,6 +32,7 @@ interface SessionData {
   form_id: string;
   step_id: string;
   step: FlowStep;
+  form_theme?: string;
 }
 
 function normalizeEmailSpeech(input: string): string {
@@ -74,20 +75,67 @@ function validateWithRegex(input: string, regex: string): boolean {
   }
 }
 
+// Theme styles as an object for easy inline application
+const getThemeStyles = (theme: string) => {
+  switch (theme) {
+    case 'light':
+      return {
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(22px)',
+        border: '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+        color: '#0f172a'
+      };
+    case 'glass':
+      return {
+        background: 'rgba(255, 255, 255, 0.02)',
+        backdropFilter: 'blur(30px) saturate(180%)',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+        color: '#ffffff'
+      };
+    case 'brand':
+      return {
+        background: 'linear-gradient(135deg, rgba(0, 191, 166, 0.15), rgba(79, 70, 229, 0.15))',
+        backdropFilter: 'blur(22px)',
+        border: '2px solid rgba(0, 191, 166, 0.3)',
+        boxShadow: '0 20px 60px rgba(79, 70, 229, 0.3)',
+        color: '#ffffff'
+      };
+    case 'minimal':
+      return {
+        background: '#ffffff',
+        backdropFilter: 'none',
+        border: '2px solid #e2e8f0',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        color: '#1e293b'
+      };
+    case 'dark':
+    default:
+      return {
+        background: 'rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(22px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.45)',
+        color: '#ffffff'
+      };
+  }
+};
+
 function DynamicVoiceForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Get formId and theme from URL parameters
+  // Get formId from URL parameters
   const formId = searchParams.get('formId') || 'early-access-v1';
-  const urlTheme = searchParams.get('theme') || 'dark';
+  const urlTheme = searchParams.get('theme'); // Optional override
 
   const [started, setStarted] = useState(false);
   const [promptText, setPromptText] = useState("Ready when you are.");
   const [hint, setHint] = useState<string>("");
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [theme, setTheme] = useState(urlTheme);
+  const [theme, setTheme] = useState('dark'); // Default, will be updated from DB
 
   const [sessionId, setSessionId] = useState("");
   const [currentFormId, setCurrentFormId] = useState("");
@@ -126,6 +174,14 @@ function DynamicVoiceForm() {
       const data: SessionData = await r.json();
       setSessionId(data.session_id);
       setCurrentFormId(data.form_id);
+      
+      // Load theme from form data or use URL override
+      if (data.form_theme) {
+        setTheme(urlTheme || data.form_theme);
+      } else if (urlTheme) {
+        setTheme(urlTheme);
+      }
+      
       return data;
     } catch (e) {
       console.error("Session init failed:", e);
@@ -587,6 +643,8 @@ function DynamicVoiceForm() {
     });
   };
 
+  const themeStyles = getThemeStyles(theme);
+
   return (
     <main className="min-h-screen relative bg-slate-950 text-white flex items-center justify-center p-6">
       <div
@@ -597,7 +655,10 @@ function DynamicVoiceForm() {
         }}
       />
 
-      <div className={`w-full max-w-xl relative rounded-2xl p-6 voice-form-theme-${theme}`}>
+      <div 
+        className="w-full max-w-xl relative rounded-2xl p-6"
+        style={themeStyles}
+      >
         <div className="flex items-center justify-between mb-5">
           <div className="text-lg font-semibold tracking-tight">Formversation</div>
           <div className="text-sm opacity-80">
@@ -611,7 +672,7 @@ function DynamicVoiceForm() {
           <>
             <button
               onClick={handleStart}
-              className="voice-form-button w-full h-14 rounded-2xl font-semibold shadow-xl"
+              className="w-full h-14 rounded-2xl font-semibold shadow-xl"
               style={{ background: "linear-gradient(90deg,#00BFA6,#4F46E5)", color: "#fff" }}
             >
               Start voice form
@@ -623,7 +684,7 @@ function DynamicVoiceForm() {
         )}
 
         {started && (
-          <div className="voice-form-status mt-4 p-4 bg-white/5 rounded-xl text-center">
+          <div className="mt-4 p-4 bg-white/5 rounded-xl text-center">
             {listening && (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>

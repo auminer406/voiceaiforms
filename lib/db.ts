@@ -7,6 +7,7 @@ export interface Form {
   slug: string | null;
   yaml_config: string;
   webhook_url: string | null;
+  theme: string | null;  // Added for theme support
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -73,11 +74,12 @@ export const db = {
     slug?: string;
     yaml_config: string;
     webhook_url?: string;
+    theme?: string;  // Added theme parameter
   }): Promise<Form | null> {
     try {
       const result = await sql<Form>`
-        INSERT INTO forms (user_id, name, slug, yaml_config, webhook_url)
-        VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null})
+        INSERT INTO forms (user_id, name, slug, yaml_config, webhook_url, theme)
+        VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null}, ${data.theme || 'dark'})
         RETURNING *
       `;
       return result.rows[0] || null;
@@ -93,6 +95,7 @@ export const db = {
     slug?: string;
     yaml_config?: string;
     webhook_url?: string;
+    theme?: string;  // Added theme parameter
   }): Promise<Form | null> {
     try {
       const updates: string[] = [];
@@ -114,6 +117,10 @@ export const db = {
       if (data.webhook_url !== undefined) {
         updates.push(`webhook_url = $${paramCount++}`);
         values.push(data.webhook_url);
+      }
+      if (data.theme !== undefined) {
+        updates.push(`theme = $${paramCount++}`);
+        values.push(data.theme);
       }
 
       updates.push(`updated_at = CURRENT_TIMESTAMP`);

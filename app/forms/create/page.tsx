@@ -39,11 +39,45 @@ flow:
       speak: "Thank you! Your response has been recorded."
 `;
 
+const THEMES = [
+  {
+    id: 'dark',
+    name: 'Dark',
+    description: 'Modern dark theme with subtle transparency',
+    preview: 'bg-gradient-to-br from-slate-900 to-slate-800'
+  },
+  {
+    id: 'light',
+    name: 'Light',
+    description: 'Clean light theme for bright backgrounds',
+    preview: 'bg-gradient-to-br from-white to-gray-50'
+  },
+  {
+    id: 'glass',
+    name: 'Glass',
+    description: 'Glassmorphism with blur and transparency',
+    preview: 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur'
+  },
+  {
+    id: 'brand',
+    name: 'Brand',
+    description: 'Teal to indigo gradient with glow',
+    preview: 'bg-gradient-to-br from-teal-600 to-indigo-700'
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    description: 'Simple white with subtle borders',
+    preview: 'bg-white border-2 border-gray-200'
+  }
+];
+
 export default function CreateFormPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [theme, setTheme] = useState("dark");
   const [yamlConfig, setYamlConfig] = useState(DEFAULT_YAML);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -66,6 +100,7 @@ export default function CreateFormPage() {
           slug: slug || undefined,
           yaml_config: yamlConfig,
           webhook_url: webhookUrl || undefined,
+          theme, // Include theme in the request
         }),
       });
 
@@ -130,6 +165,34 @@ export default function CreateFormPage() {
             <p className="text-xs text-slate-500 mt-1">
               Optional friendly URL: /f/your-slug
             </p>
+          </div>
+
+          {/* Theme Selector */}
+          <div>
+            <label className="block text-sm font-medium mb-3">
+              Visual Theme *
+            </label>
+            <p className="text-xs text-slate-400 mb-4">
+              Choose a theme that matches your brand or website where this form will be embedded
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {THEMES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTheme(t.id)}
+                  className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    theme === t.id
+                      ? 'border-teal-500 bg-teal-500/10'
+                      : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
+                  }`}
+                >
+                  <div className={`w-full h-20 rounded-lg mb-3 ${t.preview}`}></div>
+                  <div className="font-semibold text-sm mb-1">{t.name}</div>
+                  <div className="text-xs text-slate-400">{t.description}</div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Webhook URL (optional) */}

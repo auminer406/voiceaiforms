@@ -41,7 +41,10 @@ export async function POST(req: Request) {
       form_id: formId,
       step_id: startId,
       step: firstStep,
+      form_theme: form.theme || 'dark',
     });
+   
+
   } catch (error) {
     console.error("Session init error:", error);
     return NextResponse.json(

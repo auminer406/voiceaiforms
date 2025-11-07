@@ -5,10 +5,14 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/demo(.*)',
   '/thank-you(.*)',
+  '/hvac(.*)',              // ← Add this line
   '/api/session/init(.*)',
   '/api/session/answer(.*)',
   '/api/tts(.*)',
   '/api/submit(.*)',
+  '/api/webhooks/stripe(.*)',  // ← Also add this for Stripe webhooks
+  '/api/create-checkout(.*)',   // ← And this for checkout
+  '/api/capture-email(.*)',     // ← And this for email capture
   '/',
 ])
 

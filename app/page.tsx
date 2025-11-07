@@ -139,7 +139,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
+      <section className="container mx-auto px-4 pt-16 pb-20 text-center">
         <div className="max-w-4xl mx-auto">
           <div className="inline-block px-4 py-2 bg-teal-500/20 rounded-full text-teal-300 text-sm mb-6">
             Early Access Lifetime Deal

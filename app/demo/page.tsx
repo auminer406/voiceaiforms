@@ -301,13 +301,18 @@ function DynamicVoiceForm() {
     if (!srRef.current) {
       const sr = new SR();
       sr.lang = "en-US";
-      sr.interimResults = false;
+      sr.interimResults = true;
       sr.maxAlternatives = 1;
 
       sr.onresult = (e: any) => {
-        const t = (e.results?.[0]?.[0]?.transcript || "").trim();
-        pendingResolveRef.current?.(t);
-        clearPending();
+        const result = e.results[e.results.length - 1];
+        
+        // Only process final results (not interim)
+        if (result.isFinal) {
+          const t = (result[0]?.transcript || "").trim();
+          pendingResolveRef.current?.(t);
+          clearPending();
+        }
       };
       
       sr.onerror = (e: any) => {

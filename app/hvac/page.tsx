@@ -190,7 +190,7 @@ export default function HVACLandingPage() {
                 Join 1000 Founders - $25 →
               </Link>
               <Link
-                href="/demo?formId=hvac-service-invoice"
+                href="/demo?formId=early-access-v1"
                 className="px-8 py-4 bg-slate-800/50 border border-slate-700 rounded-lg text-xl font-semibold hover:bg-slate-700/50 transition"
               >
                 Try the Demo

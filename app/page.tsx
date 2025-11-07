@@ -197,6 +197,11 @@ export default function LandingPage() {
             Every Form Deserves a <span className="text-teal-400">Conversation</span>
           </h2>
 
+          <p className="text-sm text-slate-400 text-center mb-2">
+            [Demo video coming soon]
+          </p>
+
+
           {/* Video Placeholder */}
           <div className="relative aspect-video bg-slate-800/50 rounded-2xl overflow-hidden mb-8 border border-slate-700">
             <Image

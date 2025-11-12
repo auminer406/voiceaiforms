@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 
 // GET /api/submissions?formId=xxx
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const user = await currentUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

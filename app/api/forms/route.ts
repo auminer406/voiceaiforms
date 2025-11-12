@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 
 // GET /api/forms - List user's forms
 // GET /api/forms?id=xxx - Get specific form (if user owns it)
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const user = await currentUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -56,7 +57,8 @@ export async function GET(request: NextRequest) {
 // POST /api/forms - Create new form
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const user = await currentUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -108,7 +110,8 @@ export async function POST(request: NextRequest) {
 // PUT /api/forms - Update existing form
 export async function PUT(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const user = await currentUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -161,7 +164,8 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/forms?id=xxx - Delete form
 export async function DELETE(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const user = await currentUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

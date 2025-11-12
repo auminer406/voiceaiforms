@@ -135,6 +135,7 @@ function DynamicVoiceForm() {
   const [hint, setHint] = useState<string>("");
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [transcribedText, setTranscribedText] = useState<string>("");
   const [theme, setTheme] = useState('dark'); // Default, will be updated from DB
 
   const [sessionId, setSessionId] = useState("");
@@ -237,13 +238,13 @@ function DynamicVoiceForm() {
 
   async function speak(text: string) {
     setPromptText(text);
-    
+
     // Ensure AudioContext exists and is resumed
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!audioCtxRef.current && Ctx) {
       audioCtxRef.current = new Ctx();
     }
-    
+
     // Critical for iOS: Always try to resume before playing
     if (audioCtxRef.current?.state === "suspended") {
       try {
@@ -268,7 +269,7 @@ function DynamicVoiceForm() {
       a.src = url;
 
       setSpeaking(true);
-      
+
       // iOS requires explicit play() call from user gesture context
       await new Promise<void>((resolve) => {
         a.onended = () => {
@@ -288,6 +289,9 @@ function DynamicVoiceForm() {
           resolve();
         });
       });
+
+      // Add delay after speaking finishes before starting to listen (prevents cutting off user)
+      await new Promise(resolve => setTimeout(resolve, 800));
     } catch (e) {
       console.error("TTS error:", e);
       setSpeaking(false);
@@ -337,6 +341,7 @@ function DynamicVoiceForm() {
     }
 
     setListening(true);
+    setTranscribedText(""); // Clear previous transcription
 
     return new Promise<string>((resolve, reject) => {
       let done = false;
@@ -344,11 +349,13 @@ function DynamicVoiceForm() {
       pendingResolveRef.current = (t: string) => {
         if (done) return;
         done = true;
+        setTranscribedText(t); // Show what was heard
         resolve(t);
       };
       pendingRejectRef.current = (e: any) => {
         if (done) return;
         done = true;
+        setTranscribedText(""); // Clear on error
         reject(e);
       };
 
@@ -358,6 +365,7 @@ function DynamicVoiceForm() {
         if (done) return;
         done = true;
         try { srRef.current?.stop(); } catch {}
+        setTranscribedText(""); // Clear on timeout
         reject(new Error("timeout"));
       }, timeoutMs);
 
@@ -705,6 +713,15 @@ function DynamicVoiceForm() {
             {!listening && !speaking && (
               <span className="text-sm opacity-60">Processing...</span>
             )}
+
+            {/* Display transcribed text */}
+            {transcribedText && (
+              <div className="mt-4 p-3 bg-green-500/20 border border-green-500/40 rounded-lg">
+                <p className="text-xs opacity-70 mb-1">You said:</p>
+                <p className="text-base font-medium">{transcribedText}</p>
+              </div>
+            )}
+
             {speaking && (
               <button
                 onClick={stopSpeaking}

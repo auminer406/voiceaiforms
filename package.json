@@ -10,7 +10,7 @@
     "migrate": "tsx --env-file .env.local scripts/migrate-existing-forms.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.34.1",
+    "@clerk/nextjs": "^6.35.0",
     "@stripe/stripe-js": "^8.3.0",
     "@vercel/postgres": "^0.10.0",
     "dotenv": "^17.2.3",

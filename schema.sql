@@ -4,10 +4,12 @@
 -- Forms table: stores YAML configurations
 CREATE TABLE IF NOT EXISTS forms (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id TEXT,  -- Clerk user ID (null for legacy forms)
   name TEXT NOT NULL,
   slug TEXT UNIQUE,
   yaml_config TEXT NOT NULL,
   webhook_url TEXT,
+  theme TEXT DEFAULT 'dark',
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -24,6 +26,8 @@ CREATE TABLE IF NOT EXISTS submissions (
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_forms_slug ON forms(slug);
+CREATE INDEX IF NOT EXISTS idx_forms_user_id ON forms(user_id);
+CREATE INDEX IF NOT EXISTS idx_forms_user_active ON forms(user_id, is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_forms_created_at ON forms(created_at);
 CREATE INDEX IF NOT EXISTS idx_submissions_form_id ON submissions(form_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_submitted_at ON submissions(submitted_at);

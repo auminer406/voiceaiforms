@@ -30,7 +30,7 @@ flow:
     email:
       type: "email"
       label: "Email Address"
-      speak: "What's your email address? Please say it slowly, like: john at example dot com."
+      speak: "What's your email address? Please say it slowly, like: john at example dot com. You may also spell it letter by letter if it's difficult for me to understand."
       confirm:
         enabled: true
         prompt: "I heard {email}. Is that correct? Say yes or no."

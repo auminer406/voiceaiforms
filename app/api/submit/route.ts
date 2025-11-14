@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { generateInvoiceFromFormData } from "@/lib/invoice-generator";
+import { sendInvoiceToCustomerAndContractor } from "@/lib/email-sender";
 
 export async function POST(req: Request) {
   try {
@@ -35,8 +37,51 @@ export async function POST(req: Request) {
 
     console.log("✅ Formversation submission saved:", submission.id);
 
-    // Get form to check for webhook
+    // Get form to check for webhook and owner
     const form = await db.getForm(form_id);
+
+    // Generate and send invoice if OpenAI and Resend are configured
+    if (process.env.OPENAI_API_KEY && process.env.RESEND_API_KEY && form?.user_id) {
+      try {
+        // Get contractor profile for their email
+        const contractorProfile = await db.getUserProfile(form.user_id);
+
+        if (contractorProfile?.email) {
+          console.log("📧 Generating invoice with OpenAI...");
+
+          // Generate invoice using OpenAI
+          const invoice = await generateInvoiceFromFormData(
+            answers,
+            contractorProfile.company_name || undefined
+          );
+
+          console.log("✅ Invoice generated:", invoice.invoiceNumber);
+
+          // Send emails to customer and contractor
+          const emailResult = await sendInvoiceToCustomerAndContractor(
+            invoice,
+            contractorProfile.email
+          );
+
+          if (emailResult.customerSent) {
+            console.log("📧 Invoice sent to customer:", invoice.customerEmail);
+          }
+          if (emailResult.contractorSent) {
+            console.log("📧 Invoice copy sent to contractor:", contractorProfile.email);
+          }
+          if (emailResult.errors.length > 0) {
+            console.error("⚠️ Email errors:", emailResult.errors);
+          }
+        } else {
+          console.log("⚠️ Contractor profile not found or missing email - skipping invoice");
+        }
+      } catch (invoiceError) {
+        console.error("❌ Invoice generation/sending failed:", invoiceError);
+        // Don't fail the submission if invoice fails
+      }
+    } else {
+      console.log("ℹ️ Invoice generation skipped (missing API keys or user_id)");
+    }
 
     // Optional: forward to webhook if configured
     if (form?.webhook_url) {

@@ -24,6 +24,16 @@ CREATE TABLE IF NOT EXISTS submissions (
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- User profiles table: stores contractor information
+CREATE TABLE IF NOT EXISTS user_profiles (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id TEXT UNIQUE NOT NULL,  -- Clerk user ID
+  email TEXT NOT NULL,  -- Contractor email for receiving invoices
+  company_name TEXT,  -- Optional company name for invoice branding
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_forms_slug ON forms(slug);
 CREATE INDEX IF NOT EXISTS idx_forms_user_id ON forms(user_id);
@@ -31,6 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_forms_user_active ON forms(user_id, is_active) WH
 CREATE INDEX IF NOT EXISTS idx_forms_created_at ON forms(created_at);
 CREATE INDEX IF NOT EXISTS idx_submissions_form_id ON submissions(form_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_submitted_at ON submissions(submitted_at);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
 
 -- Insert the existing early-access form as first entry
 -- This will be updated via migration script

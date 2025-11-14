@@ -12,31 +12,47 @@ flow:
   steps:
     welcome:
       type: "message"
-      speak: "Welcome! Let's get started."
+      speak: "Hello! Welcome to our voice form. This will only take a moment."
       next: "name"
 
     name:
       type: "text"
-      label: "What's your name?"
-      speak: "What's your name?"
+      label: "Full Name"
+      speak: "What's your full name?"
       validate:
         required: true
         regex: "^[A-Za-z .'-]{2,60}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {name}. Is that correct? Say yes or no."
       map: "name"
       next: "email"
 
     email:
       type: "email"
-      speak: "What's your email? Say it like: name at example dot com."
+      label: "Email Address"
+      speak: "What's your email address? Please say it slowly, like: john at example dot com."
       confirm:
         enabled: true
-        prompt: "I heard {email}. Is that correct?"
+        prompt: "I heard {email}. Is that correct? Say yes or no."
       map: "email"
+      next: "question"
+
+    question:
+      type: "textarea"
+      label: "Your Message"
+      speak: "How can we help you today? Please tell me your question or request."
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "Let me confirm. You said: {question}. Is that correct? Say yes or no."
+      map: "message"
       next: "done"
 
     done:
       type: "completion"
-      speak: "Thank you! Your response has been recorded."
+      speak: "Perfect! We've received your information. Thank you!"
 `;
 
 const THEMES = [

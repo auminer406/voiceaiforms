@@ -291,7 +291,8 @@ function DynamicVoiceForm() {
       });
 
       // Add delay after speaking finishes before starting to listen (prevents cutting off user)
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 3 second delay gives users time to prepare their response
+      await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (e) {
       console.error("TTS error:", e);
       setSpeaking(false);

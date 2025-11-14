@@ -8,6 +8,7 @@ export interface Form {
   yaml_config: string;
   webhook_url: string | null;
   theme: string | null;  // Added for theme support
+  generate_invoice: boolean;  // Enable invoice generation for this form
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -83,12 +84,13 @@ export const db = {
     slug?: string;
     yaml_config: string;
     webhook_url?: string;
-    theme?: string;  // Added theme parameter
+    theme?: string;
+    generate_invoice?: boolean;
   }): Promise<Form | null> {
     try {
       const result = await sql<Form>`
-        INSERT INTO forms (user_id, name, slug, yaml_config, webhook_url, theme)
-        VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null}, ${data.theme || 'dark'})
+        INSERT INTO forms (user_id, name, slug, yaml_config, webhook_url, theme, generate_invoice)
+        VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null}, ${data.theme || 'dark'}, ${data.generate_invoice || false})
         RETURNING *
       `;
       return result.rows[0] || null;
@@ -104,7 +106,8 @@ export const db = {
     slug?: string;
     yaml_config?: string;
     webhook_url?: string;
-    theme?: string;  // Added theme parameter
+    theme?: string;
+    generate_invoice?: boolean;
   }): Promise<Form | null> {
     try {
       const updates: string[] = [];
@@ -131,13 +134,17 @@ export const db = {
         updates.push(`theme = $${paramCount++}`);
         values.push(data.theme);
       }
+      if (data.generate_invoice !== undefined) {
+        updates.push(`generate_invoice = $${paramCount++}`);
+        values.push(data.generate_invoice);
+      }
 
       updates.push(`updated_at = CURRENT_TIMESTAMP`);
       values.push(userId);
       values.push(id);
 
       const query = `
-        UPDATE forms 
+        UPDATE forms
         SET ${updates.join(', ')}
         WHERE user_id = $${paramCount++} AND id = $${paramCount}
         RETURNING *

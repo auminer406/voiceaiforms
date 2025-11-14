@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS forms (
   yaml_config TEXT NOT NULL,
   webhook_url TEXT,
   theme TEXT DEFAULT 'dark',
+  generate_invoice BOOLEAN DEFAULT false,  -- Enable invoice generation for this form
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -39,6 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_forms_slug ON forms(slug);
 CREATE INDEX IF NOT EXISTS idx_forms_user_id ON forms(user_id);
 CREATE INDEX IF NOT EXISTS idx_forms_user_active ON forms(user_id, is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_forms_created_at ON forms(created_at);
+CREATE INDEX IF NOT EXISTS idx_forms_generate_invoice ON forms(generate_invoice) WHERE generate_invoice = true;
 CREATE INDEX IF NOT EXISTS idx_submissions_form_id ON submissions(form_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_submitted_at ON submissions(submitted_at);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);

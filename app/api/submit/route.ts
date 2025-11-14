@@ -40,8 +40,11 @@ export async function POST(req: Request) {
     // Get form to check for webhook and owner
     const form = await db.getForm(form_id);
 
-    // Generate and send invoice if OpenAI and Resend are configured
-    if (process.env.OPENAI_API_KEY && process.env.RESEND_API_KEY && form?.user_id) {
+    // Generate and send invoice if:
+    // 1. Form has invoice generation enabled
+    // 2. OpenAI and Resend are configured
+    // 3. Form has an owner
+    if (form?.generate_invoice && process.env.OPENAI_API_KEY && process.env.RESEND_API_KEY && form?.user_id) {
       try {
         // Get contractor profile for their email
         const contractorProfile = await db.getUserProfile(form.user_id);

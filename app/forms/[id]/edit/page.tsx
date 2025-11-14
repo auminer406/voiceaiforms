@@ -11,6 +11,7 @@ export default function EditFormPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [generateInvoice, setGenerateInvoice] = useState(false);
   const [yamlConfig, setYamlConfig] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ export default function EditFormPage() {
       setName(form.name);
       setSlug(form.slug || "");
       setWebhookUrl(form.webhook_url || "");
+      setGenerateInvoice(form.generate_invoice || false);
       setYamlConfig(form.yaml_config);
     } catch (e: any) {
       setError(e.message || "Failed to load form");
@@ -56,6 +58,7 @@ export default function EditFormPage() {
           slug: slug || undefined,
           yaml_config: yamlConfig,
           webhook_url: webhookUrl || undefined,
+          generate_invoice: generateInvoice,
         }),
       });
 
@@ -136,6 +139,24 @@ export default function EditFormPage() {
               onChange={(e) => setWebhookUrl(e.target.value)}
               className="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-blue-500 focus:outline-none"
             />
+          </div>
+
+          {/* Invoice Generation Toggle */}
+          <div className="p-4 rounded-lg border border-slate-700 bg-slate-900/50">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={generateInvoice}
+                onChange={(e) => setGenerateInvoice(e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-slate-600 text-teal-500 focus:ring-2 focus:ring-teal-500 focus:ring-offset-0 focus:ring-offset-slate-900 bg-slate-800"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-sm mb-1">Generate Invoices</div>
+                <div className="text-xs text-slate-400">
+                  Automatically generate and email invoices when this form is submitted. Requires OpenAI and Resend API keys, plus a contractor profile with email address.
+                </div>
+              </div>
+            </label>
           </div>
 
           {/* YAML Configuration */}

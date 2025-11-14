@@ -1,10 +1,10 @@
-# Voice Form Template - Electrical Invoice
-# Pre-configured for electricians with automatic invoice generation
+# Voice Form Template - Electrical Service Request
+# Customer-facing form for electrical service requests
 
 version: 1
 flow:
-  id: "electrical-invoice"
-  name: "Electrical Invoice"
+  id: "electrical-service-request"
+  name: "Electrical Service Request"
   start: "welcome"
 
   steps:

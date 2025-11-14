@@ -1,0 +1,110 @@
+# Voice Form Template - Handyman Invoice
+# Contractor-facing form for billing completed handyman work
+# Automatically generates and emails invoice to customer
+
+version: 1
+flow:
+  id: "handyman-invoice"
+  name: "Handyman Invoice"
+  start: "welcome"
+
+  steps:
+    welcome:
+      type: "message"
+      speak: "Ready to create an invoice. Let's get the details for the completed work."
+      next: "customer_name"
+
+    customer_name:
+      type: "text"
+      label: "Customer Name"
+      speak: "What is the customer's full name?"
+      validate:
+        required: true
+        regex: "^[A-Za-z .'-]{2,60}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {customer_name}. Is that correct? Say yes or no."
+      map: "customer_name"
+      next: "customer_email"
+
+    customer_email:
+      type: "email"
+      label: "Customer Email"
+      speak: "What's the customer's email address? Say it slowly, like: john at example dot com. You may also spell it letter by letter if it's difficult for me to understand."
+      confirm:
+        enabled: true
+        prompt: "I heard {customer_email}. Is that correct? Say yes or no."
+      map: "customer_email"
+      next: "service_address"
+
+    service_address:
+      type: "text"
+      label: "Service Address"
+      speak: "What's the service address where the work was completed?"
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "I heard {service_address}. Is that correct? Say yes or no."
+      map: "service_address"
+      next: "work_performed"
+
+    work_performed:
+      type: "textarea"
+      label: "Work Performed"
+      speak: "Describe the handyman work that was performed. Include all services and repairs completed."
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "Let me confirm the work performed. You said: {work_performed}. Is that correct? Say yes or no."
+      map: "work_performed"
+      next: "hours_worked"
+
+    hours_worked:
+      type: "text"
+      label: "Hours Worked"
+      speak: "How many hours did this job take? You can say it like: three hours, or two and a half hours."
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "I heard {hours_worked} hours. Is that correct? Say yes or no."
+      map: "hours_worked"
+      next: "hourly_rate"
+
+    hourly_rate:
+      type: "text"
+      label: "Hourly Rate"
+      speak: "What is your hourly rate? For example: 85 dollars per hour."
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "I heard {hourly_rate}. Is that correct? Say yes or no."
+      map: "hourly_rate"
+      next: "additional_fees"
+
+    additional_fees:
+      type: "text"
+      label: "Additional Fees"
+      speak: "Are there any additional fees for materials or other charges? If none, say zero or none."
+      confirm:
+        enabled: true
+        prompt: "I heard {additional_fees}. Is that correct? Say yes or no."
+      map: "additional_fees"
+      next: "comments"
+
+    comments:
+      type: "textarea"
+      label: "Comments or Notes"
+      speak: "Any additional comments or notes for the customer? If none, say no comments."
+      confirm:
+        enabled: true
+        prompt: "Comments: {comments}. Is that correct? Say yes or no."
+      map: "comments"
+      next: "done"
+
+    done:
+      type: "completion"
+      speak: "Perfect! The invoice has been generated and will be emailed to the customer. Thank you!"

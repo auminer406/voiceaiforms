@@ -3,35 +3,67 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// Invoice Templates
-const INVOICE_TEMPLATES = [
+// Service Request Templates (Customer-facing)
+const SERVICE_REQUEST_TEMPLATES = [
   {
     id: 'hvac',
-    name: 'HVAC Invoice',
-    description: 'Heating, ventilation, and air conditioning invoices',
+    name: 'HVAC Service Request',
+    description: 'Customer form for HVAC service requests',
     icon: '🌡️',
     file: 'hvac-service-request.yaml'
   },
   {
     id: 'plumbing',
-    name: 'Plumbing Invoice',
-    description: 'Plumbing repair and service invoices',
+    name: 'Plumbing Service Request',
+    description: 'Customer form for plumbing service requests',
     icon: '🔧',
     file: 'plumbing-service-request.yaml'
   },
   {
     id: 'handyman',
-    name: 'Handyman Invoice',
-    description: 'General repair, assembly, and maintenance invoices',
+    name: 'Handyman Service Request',
+    description: 'Customer form for handyman service requests',
     icon: '🛠️',
     file: 'handyman-service-request.yaml'
   },
   {
     id: 'electrical',
-    name: 'Electrical Invoice',
-    description: 'Electrical repair and installation invoices',
+    name: 'Electrical Service Request',
+    description: 'Customer form for electrical service requests',
     icon: '⚡',
     file: 'electrical-service-request.yaml'
+  }
+];
+
+// Invoice Templates (Contractor-facing, for billing)
+const INVOICE_TEMPLATES = [
+  {
+    id: 'hvac',
+    name: 'HVAC Invoice',
+    description: 'Contractor billing form for completed HVAC work',
+    icon: '🌡️',
+    file: 'hvac-invoice.yaml'
+  },
+  {
+    id: 'plumbing',
+    name: 'Plumbing Invoice',
+    description: 'Contractor billing form for completed plumbing work',
+    icon: '🔧',
+    file: 'plumbing-invoice.yaml'
+  },
+  {
+    id: 'handyman',
+    name: 'Handyman Invoice',
+    description: 'Contractor billing form for completed handyman work',
+    icon: '🛠️',
+    file: 'handyman-invoice.yaml'
+  },
+  {
+    id: 'electrical',
+    name: 'Electrical Invoice',
+    description: 'Contractor billing form for completed electrical work',
+    icon: '⚡',
+    file: 'electrical-invoice.yaml'
   }
 ];
 
@@ -134,7 +166,7 @@ export default function CreateFormPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
 
-  async function loadTemplate(templateFile: string, templateName: string) {
+  async function loadTemplate(templateFile: string, templateName: string, enableInvoice: boolean = false) {
     setLoadingTemplate(true);
     try {
       const response = await fetch(`/yaml-templates/${templateFile}`);
@@ -142,7 +174,7 @@ export default function CreateFormPage() {
 
       const yamlContent = await response.text();
       setYamlConfig(yamlContent);
-      setGenerateInvoice(true); // Auto-enable invoice generation for invoice templates
+      setGenerateInvoice(enableInvoice); // Enable invoice generation for invoice templates only
       setName(templateName);
       setShowTemplateSelector(false);
     } catch (e: any) {
@@ -239,6 +271,39 @@ export default function CreateFormPage() {
               </div>
             </div>
 
+            {/* Service Request Templates Section */}
+            <div className="p-6 rounded-lg border-2 border-blue-500/30 bg-blue-500/5">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                  <span>📋</span>
+                  <span>Service Request Templates</span>
+                </h3>
+                <p className="text-sm text-slate-400">
+                  Customer-facing forms for your website. Customers request service and you receive notifications.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {SERVICE_REQUEST_TEMPLATES.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => loadTemplate(template.file, template.name, false)}
+                    disabled={loadingTemplate}
+                    className="p-4 rounded-lg border-2 border-slate-700 bg-slate-900/50 hover:border-blue-500 hover:bg-blue-500/10 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="text-3xl">{template.icon}</div>
+                      <div className="flex-1">
+                        <div className="font-semibold mb-1">{template.name}</div>
+                        <div className="text-xs text-slate-400">{template.description}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Invoice Templates Section */}
             <div className="p-6 rounded-lg border-2 border-teal-500/30 bg-teal-500/5">
               <div className="mb-6">
@@ -247,7 +312,7 @@ export default function CreateFormPage() {
                   <span>Invoice Templates</span>
                 </h3>
                 <p className="text-sm text-slate-400">
-                  Pre-configured forms that automatically generate and email invoices to customers and contractors
+                  Contractor-facing forms for billing. Fill out after completing work to generate and email invoices.
                 </p>
               </div>
 
@@ -256,7 +321,7 @@ export default function CreateFormPage() {
                   <button
                     key={template.id}
                     type="button"
-                    onClick={() => loadTemplate(template.file, template.name)}
+                    onClick={() => loadTemplate(template.file, template.name, true)}
                     disabled={loadingTemplate}
                     className="p-4 rounded-lg border-2 border-slate-700 bg-slate-900/50 hover:border-teal-500 hover:bg-teal-500/10 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                   >

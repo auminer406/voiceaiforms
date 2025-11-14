@@ -1,10 +1,10 @@
-# Voice Form Template - Handyman Invoice
-# Pre-configured for handyman services with automatic invoice generation
+# Voice Form Template - Handyman Service Request
+# Customer-facing form for handyman service requests
 
 version: 1
 flow:
-  id: "handyman-invoice"
-  name: "Handyman Invoice"
+  id: "handyman-service-request"
+  name: "Handyman Service Request"
   start: "welcome"
 
   steps:

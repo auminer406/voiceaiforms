@@ -1,10 +1,10 @@
-# Voice Form Template - Plumbing Invoice
-# Pre-configured for plumbers with automatic invoice generation
+# Voice Form Template - Plumbing Service Request
+# Customer-facing form for plumbing service requests
 
 version: 1
 flow:
-  id: "plumbing-invoice"
-  name: "Plumbing Invoice"
+  id: "plumbing-service-request"
+  name: "Plumbing Service Request"
   start: "welcome"
 
   steps:

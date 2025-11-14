@@ -1,11 +1,11 @@
-# Voice Form Template - HVAC Invoice
-# Pre-configured for HVAC contractors with automatic invoice generation
-# Collects customer info and service details, then emails invoice to both parties
+# Voice Form Template - HVAC Service Request
+# Customer-facing form for HVAC service requests
+# Collects customer info and service needs, sends notification to contractor
 
 version: 1
 flow:
-  id: "hvac-invoice"
-  name: "HVAC Invoice"
+  id: "hvac-service-request"
+  name: "HVAC Service Request"
   start: "welcome"
 
   steps:

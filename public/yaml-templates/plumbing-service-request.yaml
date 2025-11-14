@@ -1,0 +1,94 @@
+# Voice Form Template - Plumbing Service Request
+# Pre-configured for plumbers with invoice generation
+
+version: 1
+flow:
+  id: "plumbing-service-request"
+  name: "Plumbing Service Request"
+  start: "welcome"
+
+  steps:
+    welcome:
+      type: "message"
+      speak: "Hello! Thank you for contacting us. I'll help you schedule your plumbing service. This will only take a minute."
+      next: "name"
+
+    name:
+      type: "text"
+      label: "Customer Name"
+      speak: "First, what's your full name?"
+      validate:
+        required: true
+        regex: "^[A-Za-z .'-]{2,60}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {name}. Is that correct? Say yes or no."
+      map: "customer_name"
+      next: "email"
+
+    email:
+      type: "email"
+      label: "Email Address"
+      speak: "What's your email address? Please say it slowly, like: john at example dot com. You may also spell it letter by letter if it's difficult for me to understand."
+      confirm:
+        enabled: true
+        prompt: "I heard {email}. Is that correct? Say yes or no."
+      map: "customer_email"
+      next: "phone"
+
+    phone:
+      type: "text"
+      label: "Phone Number"
+      speak: "What's the best phone number to reach you? You can say the digits one at a time."
+      validate:
+        required: true
+        regex: "^[0-9]{10,15}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {phone}. Is that correct? Say yes or no."
+      map: "customer_phone"
+      next: "address"
+
+    address:
+      type: "text"
+      label: "Service Address"
+      speak: "What's the address where you need plumbing service?"
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "I heard {address}. Is that correct? Say yes or no."
+      map: "service_address"
+      next: "issue"
+
+    issue:
+      type: "textarea"
+      label: "Plumbing Issue"
+      speak: "Please describe the plumbing issue you're experiencing. For example, is it a leak, clog, broken fixture, or something else? Take your time."
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "Let me confirm. You said: {issue}. Is that correct? Say yes or no."
+      map: "issue_description"
+      next: "urgency"
+
+    urgency:
+      type: "select"
+      label: "Urgency Level"
+      speak: "How urgent is this? Say: emergency, urgent, or routine."
+      options:
+        - value: "emergency"
+          label: "Emergency (flooding, burst pipe, no water)"
+        - value: "urgent"
+          label: "Urgent (major leak, backed up drain)"
+        - value: "routine"
+          label: "Routine (minor repair, maintenance)"
+      validate:
+        required: true
+      map: "urgency_level"
+      next: "done"
+
+    done:
+      type: "completion"
+      speak: "Perfect! We've received your plumbing service request and will send you a detailed invoice via email. Someone from our team will contact you shortly. Thank you!"

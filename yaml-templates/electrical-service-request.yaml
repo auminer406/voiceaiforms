@@ -1,0 +1,94 @@
+# Voice Form Template - Electrical Service Request
+# Pre-configured for electricians with invoice generation
+
+version: 1
+flow:
+  id: "electrical-service-request"
+  name: "Electrical Service Request"
+  start: "welcome"
+
+  steps:
+    welcome:
+      type: "message"
+      speak: "Hello! Thank you for contacting us. I'll help you schedule your electrical service. This will only take a minute."
+      next: "name"
+
+    name:
+      type: "text"
+      label: "Customer Name"
+      speak: "First, what's your full name?"
+      validate:
+        required: true
+        regex: "^[A-Za-z .'-]{2,60}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {name}. Is that correct? Say yes or no."
+      map: "customer_name"
+      next: "email"
+
+    email:
+      type: "email"
+      label: "Email Address"
+      speak: "What's your email address? Please say it slowly, like: john at example dot com. You may also spell it letter by letter if it's difficult for me to understand."
+      confirm:
+        enabled: true
+        prompt: "I heard {email}. Is that correct? Say yes or no."
+      map: "customer_email"
+      next: "phone"
+
+    phone:
+      type: "text"
+      label: "Phone Number"
+      speak: "What's the best phone number to reach you? You can say the digits one at a time."
+      validate:
+        required: true
+        regex: "^[0-9]{10,15}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {phone}. Is that correct? Say yes or no."
+      map: "customer_phone"
+      next: "address"
+
+    address:
+      type: "text"
+      label: "Service Address"
+      speak: "What's the address where you need electrical service?"
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "I heard {address}. Is that correct? Say yes or no."
+      map: "service_address"
+      next: "issue"
+
+    issue:
+      type: "textarea"
+      label: "Electrical Issue"
+      speak: "Please describe the electrical issue or service you need. For example: outlets not working, lighting installation, panel upgrade, or other electrical work. Take your time."
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "Let me confirm. You said: {issue}. Is that correct? Say yes or no."
+      map: "issue_description"
+      next: "urgency"
+
+    urgency:
+      type: "select"
+      label: "Urgency Level"
+      speak: "How urgent is this? Say: emergency, urgent, or routine."
+      options:
+        - value: "emergency"
+          label: "Emergency (power outage, sparking, safety hazard)"
+        - value: "urgent"
+          label: "Urgent (partial power loss, needed soon)"
+        - value: "routine"
+          label: "Routine (installation, upgrade, maintenance)"
+      validate:
+        required: true
+      map: "urgency_level"
+      next: "done"
+
+    done:
+      type: "completion"
+      speak: "Perfect! We've received your electrical service request and will send you a detailed invoice via email. Someone from our team will contact you shortly. Thank you!"

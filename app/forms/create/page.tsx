@@ -3,6 +3,38 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+// Invoice Templates
+const INVOICE_TEMPLATES = [
+  {
+    id: 'hvac',
+    name: 'HVAC Service',
+    description: 'Heating, ventilation, and air conditioning service requests',
+    icon: '🌡️',
+    file: 'hvac-service-request.yaml'
+  },
+  {
+    id: 'plumbing',
+    name: 'Plumbing Service',
+    description: 'Plumbing repairs and service requests',
+    icon: '🔧',
+    file: 'plumbing-service-request.yaml'
+  },
+  {
+    id: 'handyman',
+    name: 'Handyman Service',
+    description: 'General repairs, assembly, and maintenance',
+    icon: '🛠️',
+    file: 'handyman-service-request.yaml'
+  },
+  {
+    id: 'electrical',
+    name: 'Electrical Service',
+    description: 'Electrical repairs and installations',
+    icon: '⚡',
+    file: 'electrical-service-request.yaml'
+  }
+];
+
 const DEFAULT_YAML = `version: 1
 flow:
   id: "my-form"
@@ -98,6 +130,33 @@ export default function CreateFormPage() {
   const [yamlConfig, setYamlConfig] = useState(DEFAULT_YAML);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+
+  async function loadTemplate(templateFile: string, templateName: string) {
+    setLoadingTemplate(true);
+    try {
+      const response = await fetch(`/yaml-templates/${templateFile}`);
+      if (!response.ok) throw new Error('Failed to load template');
+
+      const yamlContent = await response.text();
+      setYamlConfig(yamlContent);
+      setGenerateInvoice(true); // Auto-enable invoice generation for invoice templates
+      setName(templateName);
+      setShowTemplateSelector(false);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load template');
+    } finally {
+      setLoadingTemplate(false);
+    }
+  }
+
+  function startFromBlank() {
+    setYamlConfig(DEFAULT_YAML);
+    setGenerateInvoice(false);
+    setShowTemplateSelector(false);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -152,7 +211,95 @@ export default function CreateFormPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Template Selector */}
+        {showTemplateSelector ? (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-xl font-semibold mb-2">How would you like to start?</h2>
+              <p className="text-slate-400">Choose a template or start from scratch</p>
+            </div>
+
+            {/* Start from Blank Option */}
+            <div className="p-6 rounded-lg border-2 border-slate-700 bg-slate-900/50 hover:border-slate-600 transition-all">
+              <div className="flex items-start gap-4">
+                <div className="text-4xl">📝</div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-2">Start from Blank</h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    Create a custom voice form from scratch. Perfect for lead capture, surveys, and general purpose forms.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={startFromBlank}
+                    className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 font-medium text-sm"
+                  >
+                    Start from Blank
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Invoice Templates Section */}
+            <div className="p-6 rounded-lg border-2 border-teal-500/30 bg-teal-500/5">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                  <span>💼</span>
+                  <span>Invoice Templates</span>
+                </h3>
+                <p className="text-sm text-slate-400">
+                  Pre-configured forms that automatically generate and email invoices to customers and contractors
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {INVOICE_TEMPLATES.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => loadTemplate(template.file, template.name)}
+                    disabled={loadingTemplate}
+                    className="p-4 rounded-lg border-2 border-slate-700 bg-slate-900/50 hover:border-teal-500 hover:bg-teal-500/10 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="text-3xl">{template.icon}</div>
+                      <div className="flex-1">
+                        <div className="font-semibold mb-1">{template.name}</div>
+                        <div className="text-xs text-slate-400">{template.description}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="text-xs text-blue-300">
+                  <strong>Note:</strong> Invoice templates require OpenAI and Resend API keys, plus a contractor profile with your email. Set these up after creating the form.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => router.push("/forms")}
+                className="px-6 py-3 rounded-lg font-semibold bg-slate-700 hover:bg-slate-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Back to Templates Button */}
+            <div className="flex justify-between items-center mb-4">
+              <button
+                type="button"
+                onClick={() => setShowTemplateSelector(true)}
+                className="text-sm text-teal-400 hover:text-teal-300 flex items-center gap-1"
+              >
+                ← Back to templates
+              </button>
+            </div>
           {/* Form Name */}
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -296,18 +443,21 @@ export default function CreateFormPage() {
             </button>
           </div>
         </form>
+        )}
 
-        {/* Help Section */}
-        <div className="mt-12 p-6 rounded-lg border border-slate-700 bg-slate-900/50">
-          <h3 className="text-lg font-semibold mb-3">💡 Quick Tips</h3>
-          <ul className="space-y-2 text-sm text-slate-400">
-            <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">type: "text"</code> for open-ended questions</li>
-            <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">type: "email"</code> for email capture with automatic parsing</li>
-            <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">type: "single_select"</code> for multiple choice</li>
-            <li>• Add <code className="px-1 py-0.5 bg-slate-800 rounded">confirm: enabled: true</code> to verify answers</li>
-            <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">synonyms</code> to match different ways users might say the same thing</li>
-          </ul>
-        </div>
+        {/* Help Section - Only show when not in template selector */}
+        {!showTemplateSelector && (
+          <div className="mt-12 p-6 rounded-lg border border-slate-700 bg-slate-900/50">
+            <h3 className="text-lg font-semibold mb-3">💡 Quick Tips</h3>
+            <ul className="space-y-2 text-sm text-slate-400">
+              <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">type: "text"</code> for open-ended questions</li>
+              <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">type: "email"</code> for email capture with automatic parsing</li>
+              <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">type: "single_select"</code> for multiple choice</li>
+              <li>• Add <code className="px-1 py-0.5 bg-slate-800 rounded">confirm: enabled: true</code> to verify answers</li>
+              <li>• Use <code className="px-1 py-0.5 bg-slate-800 rounded">synonyms</code> to match different ways users might say the same thing</li>
+            </ul>
+          </div>
+        )}
       </div>
     </main>
   );

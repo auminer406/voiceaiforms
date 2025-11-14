@@ -7,29 +7,29 @@ import { useRouter } from "next/navigation";
 const INVOICE_TEMPLATES = [
   {
     id: 'hvac',
-    name: 'HVAC Service',
-    description: 'Heating, ventilation, and air conditioning service requests',
+    name: 'HVAC Invoice',
+    description: 'Heating, ventilation, and air conditioning invoices',
     icon: '🌡️',
     file: 'hvac-service-request.yaml'
   },
   {
     id: 'plumbing',
-    name: 'Plumbing Service',
-    description: 'Plumbing repairs and service requests',
+    name: 'Plumbing Invoice',
+    description: 'Plumbing repair and service invoices',
     icon: '🔧',
     file: 'plumbing-service-request.yaml'
   },
   {
     id: 'handyman',
-    name: 'Handyman Service',
-    description: 'General repairs, assembly, and maintenance',
+    name: 'Handyman Invoice',
+    description: 'General repair, assembly, and maintenance invoices',
     icon: '🛠️',
     file: 'handyman-service-request.yaml'
   },
   {
     id: 'electrical',
-    name: 'Electrical Service',
-    description: 'Electrical repairs and installations',
+    name: 'Electrical Invoice',
+    description: 'Electrical repair and installation invoices',
     icon: '⚡',
     file: 'electrical-service-request.yaml'
   }

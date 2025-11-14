@@ -1,11 +1,11 @@
-# Voice Form Template - HVAC Service Request Example
-# This template includes confirmations and clear voice instructions
-# Copy this as a starting point for custom forms
+# Voice Form Template - HVAC Invoice
+# Pre-configured for HVAC contractors with automatic invoice generation
+# Collects customer info and service details, then emails invoice to both parties
 
 version: 1
 flow:
-  id: "hvac-service-request"
-  name: "HVAC Service Request"
+  id: "hvac-invoice"
+  name: "HVAC Invoice"
   start: "welcome"
 
   steps:
@@ -92,4 +92,4 @@ flow:
 
     done:
       type: "completion"
-      speak: "Perfect! We've received your service request and will send you a detailed invoice via email. Someone from our team will contact you shortly. Thank you for choosing our service!"
+      speak: "Perfect! We've received your request and will send you a detailed invoice via email. Someone from our team will contact you shortly. Thank you for choosing our service!"

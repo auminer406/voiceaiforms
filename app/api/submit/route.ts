@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateInvoiceFromFormData } from "@/lib/invoice-generator";
-import { sendInvoiceToCustomerAndContractor } from "@/lib/email-sender";
+import { sendInvoiceToCustomerAndContractor, sendServiceRequestNotification } from "@/lib/email-sender";
 
 export async function POST(req: Request) {
   try {
@@ -82,8 +82,34 @@ export async function POST(req: Request) {
         console.error("❌ Invoice generation/sending failed:", invoiceError);
         // Don't fail the submission if invoice fails
       }
+    } else if (!form?.generate_invoice && process.env.RESEND_API_KEY && form?.user_id) {
+      // Send service request notification for non-invoice forms
+      try {
+        const contractorProfile = await db.getUserProfile(form.user_id);
+
+        if (contractorProfile?.email) {
+          console.log("📧 Sending service request notification...");
+
+          const notificationResult = await sendServiceRequestNotification(
+            form.name,
+            answers,
+            contractorProfile.email
+          );
+
+          if (notificationResult.success) {
+            console.log("📧 Service request notification sent to contractor:", contractorProfile.email);
+          } else {
+            console.error("⚠️ Service request notification failed:", notificationResult.error);
+          }
+        } else {
+          console.log("⚠️ Contractor profile not found or missing email - skipping notification");
+        }
+      } catch (notificationError) {
+        console.error("❌ Service request notification failed:", notificationError);
+        // Don't fail the submission if notification fails
+      }
     } else {
-      console.log("ℹ️ Invoice generation skipped (missing API keys or user_id)");
+      console.log("ℹ️ Email notifications skipped (missing API keys or user_id)");
     }
 
     // Optional: forward to webhook if configured

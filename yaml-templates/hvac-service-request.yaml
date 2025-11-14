@@ -40,10 +40,9 @@ flow:
     phone:
       type: "text"
       label: "Phone Number"
-      speak: "What's the best phone number to reach you? You can say the digits one at a time."
+      speak: "What's the best phone number to reach you?"
       validate:
         required: true
-        regex: "^[0-9]{10,15}$"
       confirm:
         enabled: true
         prompt: "I heard {phone}. Is that correct? Say yes or no."

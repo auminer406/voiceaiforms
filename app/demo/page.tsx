@@ -402,7 +402,17 @@ function DynamicVoiceForm() {
         }
         
         if (step.confirm?.enabled) {
-          const confirmPrompt = step.confirm.prompt?.replace(`{${step.map}}`, heard) || `I heard ${heard}. Is that correct?`;
+          // Replace placeholder with actual value - try both step ID and map name
+          let confirmPrompt = step.confirm.prompt || `I heard ${heard}. Is that correct?`;
+          // Replace {stepId} pattern (e.g., {name}, {email}, {phone})
+          const stepIdPattern = new RegExp(`\\{${stepId}\\}`, 'g');
+          confirmPrompt = confirmPrompt.replace(stepIdPattern, heard);
+          // Also replace {mapValue} pattern (e.g., {customer_name}, {customer_email})
+          if (step.map) {
+            const mapPattern = new RegExp(`\\{${step.map}\\}`, 'g');
+            confirmPrompt = confirmPrompt.replace(mapPattern, heard);
+          }
+
           await speak(confirmPrompt);
           
           try {
@@ -447,7 +457,17 @@ function DynamicVoiceForm() {
         }
         
         if (step.confirm?.enabled) {
-          const confirmPrompt = step.confirm.prompt?.replace(`{${step.map}}`, normalized) || `I heard ${normalized}. Is that correct?`;
+          // Replace placeholder with actual value - try both step ID and map name
+          let confirmPrompt = step.confirm.prompt || `I heard ${normalized}. Is that correct?`;
+          // Replace {stepId} pattern (e.g., {email})
+          const stepIdPattern = new RegExp(`\\{${stepId}\\}`, 'g');
+          confirmPrompt = confirmPrompt.replace(stepIdPattern, normalized);
+          // Also replace {mapValue} pattern (e.g., {customer_email})
+          if (step.map) {
+            const mapPattern = new RegExp(`\\{${step.map}\\}`, 'g');
+            confirmPrompt = confirmPrompt.replace(mapPattern, normalized);
+          }
+
           await speak(confirmPrompt);
           
           try {
@@ -493,7 +513,17 @@ function DynamicVoiceForm() {
         
         if (step.confirm?.enabled) {
           const selectedLabel = step.options?.find(o => o.id === matched)?.label || matched;
-          const confirmPrompt = step.confirm.prompt?.replace(`{${step.map}}`, selectedLabel) || `You chose ${selectedLabel}. Correct?`;
+          // Replace placeholder with actual value - try both step ID and map name
+          let confirmPrompt = step.confirm.prompt || `You chose ${selectedLabel}. Correct?`;
+          // Replace {stepId} pattern
+          const stepIdPattern = new RegExp(`\\{${stepId}\\}`, 'g');
+          confirmPrompt = confirmPrompt.replace(stepIdPattern, selectedLabel);
+          // Also replace {mapValue} pattern
+          if (step.map) {
+            const mapPattern = new RegExp(`\\{${step.map}\\}`, 'g');
+            confirmPrompt = confirmPrompt.replace(mapPattern, selectedLabel);
+          }
+
           await speak(confirmPrompt);
           
           try {

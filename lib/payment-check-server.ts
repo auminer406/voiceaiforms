@@ -1,4 +1,4 @@
-import { neon } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 import { auth } from '@clerk/nextjs/server';
 
 export interface PaymentStatus {

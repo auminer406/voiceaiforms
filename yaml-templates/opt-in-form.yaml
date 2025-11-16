@@ -37,7 +37,7 @@ flow:
       next: "reason"
 
     reason:
-      type: "textarea"
+      type: "text"
       label: "Reason for Interest"
       speak: "What is your reason for signing up today?"
       validate:

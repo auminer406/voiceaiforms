@@ -49,7 +49,7 @@ flow:
       next: "reason"
 
     reason:
-      type: "textarea"
+      type: "text"
       label: "Reason for Contact"
       speak: "What is your reason for contacting us today?"
       validate:

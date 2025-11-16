@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Paywall from "@/app/components/Paywall";
+import Navigation from "@/app/components/Navigation";
 import { checkPaymentStatusClient } from "@/lib/payment-check";
 
 // Lead Capture Templates (General purpose)
@@ -285,12 +286,14 @@ export default function CreateFormPage() {
 
   // Show form creation UI if user has paid
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Create New Voice Form</h1>
-          <p className="text-slate-400">Define your form using YAML configuration</p>
-        </div>
+    <div className="min-h-screen bg-slate-950">
+      <Navigation />
+      <main className="text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Create New Voice Form</h1>
+            <p className="text-slate-400">Define your form using YAML configuration</p>
+          </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6 text-red-400">
@@ -611,7 +614,8 @@ export default function CreateFormPage() {
             </ul>
           </div>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }

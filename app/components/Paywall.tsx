@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
+import Navigation from './Navigation';
 
 export default function Paywall() {
   const { user } = useUser();
@@ -45,15 +46,19 @@ export default function Paywall() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-900 via-slate-900 to-indigo-900 text-white">
+      <Navigation />
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
+            <div className="inline-block bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-4 py-2 mb-4">
+              <p className="text-yellow-300 text-sm font-semibold">⚠️ Pro Subscription Required</p>
+            </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-4">
-              Welcome to VoiceAIForms
+              Upgrade to Access This Feature
             </h1>
             <p className="text-xl text-slate-300">
-              Join 1000 founders getting lifetime Pro access
+              Join 1000 founders getting lifetime Pro access for just $25
             </p>
           </div>
 

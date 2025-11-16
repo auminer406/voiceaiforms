@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Paywall from "@/app/components/Paywall";
+import Navigation from "@/app/components/Navigation";
 import { checkPaymentStatusClient } from "@/lib/payment-check";
 
 export default function EditFormPage() {
@@ -116,21 +117,26 @@ export default function EditFormPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-12">Loading form...</div>
-        </div>
-      </main>
+      <div className="min-h-screen bg-slate-950">
+        <Navigation />
+        <main className="text-white p-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">Loading form...</div>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Edit Voice Form</h1>
-          <p className="text-slate-400">Modify your form configuration</p>
-        </div>
+    <div className="min-h-screen bg-slate-950">
+      <Navigation />
+      <main className="text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Edit Voice Form</h1>
+            <p className="text-slate-400">Modify your form configuration</p>
+          </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6 text-red-400">
@@ -243,7 +249,8 @@ export default function EditFormPage() {
             </a>
           </div>
         </form>
-      </div>
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }

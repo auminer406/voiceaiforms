@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Paywall from "@/app/components/Paywall";
+import Navigation from "@/app/components/Navigation";
 import { checkPaymentStatusClient } from "@/lib/payment-check";
 
 interface Form {
@@ -103,19 +104,24 @@ export default function FormsListPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center py-12">Loading forms...</div>
-        </div>
-      </main>
+      <div className="min-h-screen bg-slate-950">
+        <Navigation />
+        <main className="text-white p-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center py-12">Loading forms...</div>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-slate-950">
+      <Navigation />
+      <main className="text-white p-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Your Voice Forms</h1>
             <p className="text-slate-400">Create and manage voice-powered forms</p>
@@ -206,7 +212,8 @@ export default function FormsListPage() {
             ))}
           </div>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }

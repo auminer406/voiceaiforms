@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Paywall from "@/app/components/Paywall";
 import Navigation from "@/app/components/Navigation";
-import { checkPaymentStatusClient } from "@/lib/payment-check";
+import { checkPaymentStatusClient } from "@/lib/payment-check-client";
 
 // Lead Capture Templates (General purpose)
 const LEAD_CAPTURE_TEMPLATES = [

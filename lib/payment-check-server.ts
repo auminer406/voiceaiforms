@@ -8,7 +8,7 @@ export interface PaymentStatus {
 }
 
 /**
- * Check if the current user has paid for access
+ * SERVER-SIDE ONLY: Check if the current user has paid for access
  * Returns payment status from the users table
  */
 export async function checkUserPaymentStatus(): Promise<PaymentStatus> {
@@ -42,24 +42,6 @@ export async function checkUserPaymentStatus(): Promise<PaymentStatus> {
       tier: user.tier as string,
       lifetimeAccess: user.lifetime_access as boolean
     };
-  } catch (error) {
-    console.error('Error checking payment status:', error);
-    return { hasPaid: false, tier: 'free', lifetimeAccess: false };
-  }
-}
-
-/**
- * Client-side payment check (call from client components)
- * Makes API request to check payment status
- */
-export async function checkPaymentStatusClient(): Promise<PaymentStatus> {
-  try {
-    const response = await fetch('/api/check-payment');
-    if (!response.ok) {
-      return { hasPaid: false, tier: 'free', lifetimeAccess: false };
-    }
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('Error checking payment status:', error);
     return { hasPaid: false, tier: 'free', lifetimeAccess: false };

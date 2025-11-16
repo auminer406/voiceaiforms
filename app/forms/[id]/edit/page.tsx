@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Paywall from "@/app/components/Paywall";
 import Navigation from "@/app/components/Navigation";
-import { checkPaymentStatusClient } from "@/lib/payment-check";
+import { checkPaymentStatusClient } from "@/lib/payment-check-client";
 
 export default function EditFormPage() {
   const params = useParams();

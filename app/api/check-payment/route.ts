@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkUserPaymentStatus } from '@/lib/payment-check';
+import { checkUserPaymentStatus } from '@/lib/payment-check-server';
 
 export async function GET() {
   try {

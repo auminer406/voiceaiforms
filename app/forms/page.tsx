@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Paywall from "@/app/components/Paywall";
 import Navigation from "@/app/components/Navigation";
-import { checkPaymentStatusClient } from "@/lib/payment-check";
+import { checkPaymentStatusClient } from "@/lib/payment-check-client";
 
 interface Form {
   id: string;

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Navigation from '@/app/components/Navigation';
-import { checkPaymentStatusClient } from '@/lib/payment-check';
+import { checkPaymentStatusClient } from '@/lib/payment-check-client';
 
 export default function ProfilePage() {
   const { user } = useUser();

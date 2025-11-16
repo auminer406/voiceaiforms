@@ -44,7 +44,9 @@ function normalizeEmailSpeech(input: string): string {
   return s;
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+// Ultra-permissive email regex - accepts anything with @ and a dot somewhere after it
+// This accepts .net, .NET, .io, .co.uk, etc.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\..+$/i;
 
 function yn(s: string): boolean | null {
   const a = s.trim().toLowerCase();

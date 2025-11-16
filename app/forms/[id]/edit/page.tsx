@@ -141,7 +141,7 @@ export default function EditFormPage() {
             />
           </div>
 
-          {/* Invoice Generation Toggle */}
+          {/* Workflow Generation Toggle */}
           <div className="p-4 rounded-lg border border-slate-700 bg-slate-900/50">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
@@ -151,9 +151,9 @@ export default function EditFormPage() {
                 className="mt-1 w-5 h-5 rounded border-slate-600 text-teal-500 focus:ring-2 focus:ring-teal-500 focus:ring-offset-0 focus:ring-offset-slate-900 bg-slate-800"
               />
               <div className="flex-1">
-                <div className="font-medium text-sm mb-1">Generate Invoices</div>
+                <div className="font-medium text-sm mb-1">Generate Workflow (Invoices, Auto-responder, Emails, Scheduling)</div>
                 <div className="text-xs text-slate-400">
-                  Automatically generate and email invoices when this form is submitted. Requires OpenAI and Resend API keys, plus a contractor profile with email address.
+                  Automatically process and send emails when this form is submitted. Use for invoices, service request notifications, auto-responders, and more. Requires Resend API key and contractor profile with email address.
                 </div>
               </div>
             </label>

@@ -1,0 +1,53 @@
+# Voice Form Template - Opt-in Form
+# Simple email opt-in form for newsletters, updates, etc.
+
+version: 1
+flow:
+  id: "opt-in-form"
+  name: "Opt-in Form"
+  start: "welcome"
+
+  steps:
+    welcome:
+      type: "message"
+      speak: "Hello! Thanks for your interest. This will only take a moment."
+      next: "name"
+
+    name:
+      type: "text"
+      label: "Full Name"
+      speak: "What's your full name?"
+      validate:
+        required: true
+        regex: "^[A-Za-z .'-]{2,60}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {name}. Is that correct? Say yes or no."
+      map: "name"
+      next: "email"
+
+    email:
+      type: "email"
+      label: "Email Address"
+      speak: "What's your email address? Please say it slowly, like: john at example dot com. You may also spell it letter by letter if it's difficult for me to understand."
+      confirm:
+        enabled: true
+        prompt: "I heard {email}. Is that correct? Say yes or no."
+      map: "email"
+      next: "reason"
+
+    reason:
+      type: "textarea"
+      label: "Reason for Interest"
+      speak: "What is your reason for signing up today?"
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "You said: {reason}. Is that correct? Say yes or no."
+      map: "reason"
+      next: "done"
+
+    done:
+      type: "completion"
+      speak: "Perfect! You're all set. Thank you for signing up!"

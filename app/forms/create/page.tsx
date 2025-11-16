@@ -3,6 +3,24 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+// Lead Capture Templates (General purpose)
+const LEAD_CAPTURE_TEMPLATES = [
+  {
+    id: 'opt-in',
+    name: 'Opt-in Form',
+    description: 'Simple email opt-in for newsletters and updates',
+    icon: '✉️',
+    file: 'opt-in-form.yaml'
+  },
+  {
+    id: 'contact',
+    name: 'Contact Form',
+    description: 'General contact form for website inquiries',
+    icon: '💬',
+    file: 'contact-form.yaml'
+  }
+];
+
 // Service Request Templates (Customer-facing)
 const SERVICE_REQUEST_TEMPLATES = [
   {
@@ -268,6 +286,39 @@ export default function CreateFormPage() {
                     Start from Blank
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Lead Capture Templates Section */}
+            <div className="p-6 rounded-lg border-2 border-purple-500/30 bg-purple-500/5">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                  <span>📨</span>
+                  <span>Lead Capture Templates</span>
+                </h3>
+                <p className="text-sm text-slate-400">
+                  General purpose forms for opt-ins, contact, and lead generation on your website.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {LEAD_CAPTURE_TEMPLATES.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => loadTemplate(template.file, template.name, false)}
+                    disabled={loadingTemplate}
+                    className="p-4 rounded-lg border-2 border-slate-700 bg-slate-900/50 hover:border-purple-500 hover:bg-purple-500/10 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="text-3xl">{template.icon}</div>
+                      <div className="flex-1">
+                        <div className="font-semibold mb-1">{template.name}</div>
+                        <div className="text-xs text-slate-400">{template.description}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 

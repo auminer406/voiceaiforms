@@ -1,0 +1,65 @@
+# Voice Form Template - Contact Form
+# General contact form for website inquiries
+
+version: 1
+flow:
+  id: "contact-form"
+  name: "Contact Form"
+  start: "welcome"
+
+  steps:
+    welcome:
+      type: "message"
+      speak: "Hello! Thank you for reaching out. Let me get your contact information."
+      next: "name"
+
+    name:
+      type: "text"
+      label: "Full Name"
+      speak: "What's your full name?"
+      validate:
+        required: true
+        regex: "^[A-Za-z .'-]{2,60}$"
+      confirm:
+        enabled: true
+        prompt: "I heard {name}. Is that correct? Say yes or no."
+      map: "name"
+      next: "email"
+
+    email:
+      type: "email"
+      label: "Email Address"
+      speak: "What's your email address? Please say it slowly, like: john at example dot com. You may also spell it letter by letter if it's difficult for me to understand."
+      confirm:
+        enabled: true
+        prompt: "I heard {email}. Is that correct? Say yes or no."
+      map: "email"
+      next: "phone"
+
+    phone:
+      type: "text"
+      label: "Phone Number"
+      speak: "What's the best phone number to reach you?"
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "I heard {phone}. Is that correct? Say yes or no."
+      map: "phone"
+      next: "reason"
+
+    reason:
+      type: "textarea"
+      label: "Reason for Contact"
+      speak: "What is your reason for contacting us today?"
+      validate:
+        required: true
+      confirm:
+        enabled: true
+        prompt: "You said: {reason}. Is that correct? Say yes or no."
+      map: "reason"
+      next: "done"
+
+    done:
+      type: "completion"
+      speak: "Perfect! We've received your message and will get back to you soon. Thank you!"

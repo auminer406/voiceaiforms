@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Paywall from "@/app/components/Paywall";
+import { checkPaymentStatusClient } from "@/lib/payment-check";
 
 interface Form {
   id: string;
@@ -16,9 +18,31 @@ export default function FormsListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Payment check states
+  const [hasPaid, setHasPaid] = useState<boolean | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState(true);
+
+  // Check payment status on mount
   useEffect(() => {
-    loadForms();
+    async function checkPayment() {
+      try {
+        const status = await checkPaymentStatusClient();
+        setHasPaid(status.hasPaid);
+      } catch (error) {
+        console.error('Error checking payment:', error);
+        setHasPaid(false);
+      } finally {
+        setCheckingPayment(false);
+      }
+    }
+    checkPayment();
   }, []);
+
+  useEffect(() => {
+    if (hasPaid) {
+      loadForms();
+    }
+  }, [hasPaid]);
 
   async function loadForms() {
     try {
@@ -61,6 +85,20 @@ export default function FormsListPage() {
     
     navigator.clipboard.writeText(embedUrl);
     alert("Form URL copied to clipboard!\n\n" + embedUrl);
+  }
+
+  // Show loading while checking payment
+  if (checkingPayment) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show paywall if user hasn't paid
+  if (!hasPaid) {
+    return <Paywall />;
   }
 
   if (loading) {

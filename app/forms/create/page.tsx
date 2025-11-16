@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Paywall from "@/app/components/Paywall";
+import { checkPaymentStatusClient } from "@/lib/payment-check";
 
 // Lead Capture Templates (General purpose)
 const LEAD_CAPTURE_TEMPLATES = [
@@ -184,6 +186,26 @@ export default function CreateFormPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
 
+  // Payment check states
+  const [hasPaid, setHasPaid] = useState<boolean | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState(true);
+
+  // Check payment status on mount
+  useEffect(() => {
+    async function checkPayment() {
+      try {
+        const status = await checkPaymentStatusClient();
+        setHasPaid(status.hasPaid);
+      } catch (error) {
+        console.error('Error checking payment:', error);
+        setHasPaid(false);
+      } finally {
+        setCheckingPayment(false);
+      }
+    }
+    checkPayment();
+  }, []);
+
   async function loadTemplate(templateFile: string, templateName: string, enableInvoice: boolean = false) {
     setLoadingTemplate(true);
     try {
@@ -247,6 +269,21 @@ export default function CreateFormPage() {
     }
   }
 
+  // Show loading while checking payment
+  if (checkingPayment) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show paywall if user hasn't paid
+  if (!hasPaid) {
+    return <Paywall />;
+  }
+
+  // Show form creation UI if user has paid
   return (
     <main className="min-h-screen bg-slate-950 text-white p-8">
       <div className="max-w-4xl mx-auto">

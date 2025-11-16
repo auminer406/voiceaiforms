@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 
 export interface Form {
   id: string;
@@ -35,12 +35,13 @@ export const db = {
   // Get form by ID (public - for form filling)
   async getForm(id: string): Promise<Form | null> {
     try {
-      const result = await sql<Form>`
-        SELECT * FROM forms 
+      const sql = neon(process.env.DATABASE_URL!);
+      const result = await sql`
+        SELECT * FROM forms
         WHERE id = ${id} AND is_active = true
         LIMIT 1
       `;
-      return result.rows[0] || null;
+      return result[0] || null;
     } catch (error) {
       console.error('Error fetching form:', error);
       return null;

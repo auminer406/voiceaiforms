@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Navigation from "@/app/components/Navigation";
 
 export default function ProfilePage() {
   const [email, setEmail] = useState("");
@@ -62,17 +63,22 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white p-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center py-12">Loading profile...</div>
-        </div>
-      </main>
+      <div className="min-h-screen bg-slate-950">
+        <Navigation />
+        <main className="text-white p-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center py-12">Loading profile...</div>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-slate-950">
+      <Navigation />
+      <main className="text-white p-8">
+        <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -164,7 +170,8 @@ export default function ProfilePage() {
             <strong>Note:</strong> Make sure OpenAI and Resend API keys are configured in your environment variables.
           </p>
         </div>
-      </div>
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }

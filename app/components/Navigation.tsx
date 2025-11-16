@@ -31,6 +31,12 @@ export default function Navigation() {
                 Create Form
               </Link>
               <Link
+                href="/forms/profile"
+                className="text-slate-300 hover:text-white transition"
+              >
+                Settings
+              </Link>
+              <Link
                 href="/profile"
                 className="text-slate-300 hover:text-white transition"
               >

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
-import { db } from '@/lib/db';
+import { profileDb as db } from '@/lib/profile-db';
 
 // GET /api/profile - Get user profile
 export async function GET() {

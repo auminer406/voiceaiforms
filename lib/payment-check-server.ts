@@ -15,7 +15,10 @@ export async function checkUserPaymentStatus(): Promise<PaymentStatus> {
   try {
     const { userId } = await auth();
 
+    console.log('[Payment Check] Clerk userId:', userId);
+
     if (!userId) {
+      console.log('[Payment Check] No userId from auth()');
       return { hasPaid: false, tier: 'free', lifetimeAccess: false };
     }
 
@@ -28,6 +31,8 @@ export async function checkUserPaymentStatus(): Promise<PaymentStatus> {
       WHERE clerk_user_id = ${userId}
       LIMIT 1
     `;
+
+    console.log('[Payment Check] Database query result:', result);
 
     if (result.length === 0) {
       // User not in payment table yet

@@ -19,7 +19,7 @@ export const profileDb = {
         WHERE user_id = ${userId}
         LIMIT 1
       `;
-      return result[0] || null;
+      return (result[0] as UserProfile) || null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;
@@ -44,7 +44,7 @@ export const profileDb = {
           updated_at = CURRENT_TIMESTAMP
         RETURNING *
       `;
-      return result[0] || null;
+      return (result[0] as UserProfile) || null;
     } catch (error) {
       console.error('Error upserting user profile:', error);
       return null;

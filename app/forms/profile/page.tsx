@@ -82,9 +82,9 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Your Profile</h1>
+            <h1 className="text-3xl font-bold mb-2">Business Profile</h1>
             <p className="text-slate-400">
-              Set your email to receive invoice copies when forms are submitted
+              Set your business email and company name for invoice generation and automated notifications
             </p>
           </div>
           <Link

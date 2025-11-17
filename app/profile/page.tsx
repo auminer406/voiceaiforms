@@ -29,11 +29,11 @@ export default function ProfilePage() {
 
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-8">Account Settings</h1>
+          <h1 className="text-3xl font-bold text-white mb-8">Account Overview</h1>
 
           {/* User Info */}
           <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 mb-6">
-            <h2 className="text-xl font-semibold text-white mb-4">Profile</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Account Information</h2>
             <div className="space-y-3">
               <div>
                 <label className="text-slate-400 text-sm">Email</label>

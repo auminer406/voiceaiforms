@@ -114,7 +114,7 @@ export default function ProfilePage() {
                 placeholder="your@email.com"
               />
               <p className="text-xs text-slate-400 mt-1">
-                You'll receive a copy of all invoices generated from your forms
+                You'll receive a copy of all automations generated from your forms
               </p>
             </div>
 
@@ -130,7 +130,10 @@ export default function ProfilePage() {
                 placeholder="Your HVAC Company LLC"
               />
               <p className="text-xs text-slate-400 mt-1">
-                Appears on invoices sent to customers
+                Appears on automations sent to customers
+              </p>
+              <p className="text-xs text-slate-500 mt-2 italic">
+                Note: Only invoice forms send automations to customers. Opt-in and other internal forms are for your records only.
               </p>
             </div>
 
@@ -159,16 +162,13 @@ export default function ProfilePage() {
 
         {/* Info Box */}
         <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-          <h3 className="font-semibold mb-2">How Invoice Generation Works:</h3>
+          <h3 className="font-semibold mb-2">How Automation Works:</h3>
           <ol className="text-sm text-slate-300 space-y-1 list-decimal list-inside">
             <li>Customer completes your voice form</li>
-            <li>OpenAI processes the form data into an invoice</li>
-            <li>Invoice is emailed to the customer</li>
+            <li>OpenAI processes the form data into an automation</li>
+            <li>Invoices are sent to the customer</li>
             <li>A copy is sent to your email above</li>
           </ol>
-          <p className="text-xs text-slate-400 mt-3">
-            <strong>Note:</strong> Make sure OpenAI and Resend API keys are configured in your environment variables.
-          </p>
         </div>
         </div>
       </main>

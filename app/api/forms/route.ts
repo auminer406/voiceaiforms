@@ -47,7 +47,19 @@ export async function GET(request: NextRequest) {
 
     // Get all user's forms
     const forms = await db.getAllForms(userId);
-    return NextResponse.json(forms);
+
+    // Safety check
+    if (!forms || !Array.isArray(forms)) {
+      return NextResponse.json([]);
+    }
+
+    // Serialize dates properly
+    const serializedForms = forms.map(form => ({
+      ...form,
+      created_at: form.created_at instanceof Date ? form.created_at.toISOString() : form.created_at,
+      updated_at: form.updated_at instanceof Date ? form.updated_at.toISOString() : form.updated_at,
+    }));
+    return NextResponse.json(serializedForms);
   } catch (error) {
     console.error('GET /api/forms error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

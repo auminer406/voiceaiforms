@@ -1,5 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 
+const sql = neon(process.env.DATABASE_URL!);
+
 export interface Form {
   id: string;
   user_id: string | null;
@@ -35,7 +37,6 @@ export const db = {
   // Get form by ID (public - for form filling)
   async getForm(id: string): Promise<Form | null> {
     try {
-      const sql = neon(process.env.DATABASE_URL!);
       const result = await sql`
         SELECT * FROM forms
         WHERE id = ${id} AND is_active = true
@@ -52,11 +53,11 @@ export const db = {
   async getFormBySlug(slug: string): Promise<Form | null> {
     try {
       const result = await sql<Form>`
-        SELECT * FROM forms 
+        SELECT * FROM forms
         WHERE slug = ${slug} AND is_active = true
         LIMIT 1
       `;
-      return result.rows[0] || null;
+      return result[0] || null;
     } catch (error) {
       console.error('Error fetching form by slug:', error);
       return null;
@@ -67,11 +68,11 @@ export const db = {
   async getAllForms(userId: string): Promise<Form[]> {
     try {
       const result = await sql<Form>`
-        SELECT * FROM forms 
+        SELECT * FROM forms
         WHERE is_active = true AND user_id = ${userId}
         ORDER BY created_at DESC
       `;
-      return result.rows;
+      return result;
     } catch (error) {
       console.error('Error fetching forms:', error);
       return [];
@@ -94,7 +95,7 @@ export const db = {
         VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null}, ${data.theme || 'dark'}, ${data.generate_invoice || false})
         RETURNING *
       `;
-      return result.rows[0] || null;
+      return result[0] || null;
     } catch (error) {
       console.error('Error creating form:', error);
       return null;
@@ -111,48 +112,41 @@ export const db = {
     generate_invoice?: boolean;
   }): Promise<Form | null> {
     try {
-      const updates: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
-
-      if (data.name !== undefined) {
-        updates.push(`name = $${paramCount++}`);
-        values.push(data.name);
-      }
-      if (data.slug !== undefined) {
-        updates.push(`slug = $${paramCount++}`);
-        values.push(data.slug);
-      }
-      if (data.yaml_config !== undefined) {
-        updates.push(`yaml_config = $${paramCount++}`);
-        values.push(data.yaml_config);
-      }
-      if (data.webhook_url !== undefined) {
-        updates.push(`webhook_url = $${paramCount++}`);
-        values.push(data.webhook_url);
-      }
-      if (data.theme !== undefined) {
-        updates.push(`theme = $${paramCount++}`);
-        values.push(data.theme);
-      }
-      if (data.generate_invoice !== undefined) {
-        updates.push(`generate_invoice = $${paramCount++}`);
-        values.push(data.generate_invoice);
-      }
-
-      updates.push(`updated_at = CURRENT_TIMESTAMP`);
-      values.push(userId);
-      values.push(id);
-
-      const query = `
-        UPDATE forms
-        SET ${updates.join(', ')}
-        WHERE user_id = $${paramCount++} AND id = $${paramCount}
-        RETURNING *
+      // First get the current form
+      const current = await sql<Form>`
+        SELECT * FROM forms
+        WHERE id = ${id} AND user_id = ${userId}
+        LIMIT 1
       `;
 
-      const result = await sql.query<Form>(query, values);
-      return result.rows[0] || null;
+      if (!current || current.length === 0) {
+        return null;
+      }
+
+      // Apply updates
+      const updated = {
+        name: data.name !== undefined ? data.name : current[0].name,
+        slug: data.slug !== undefined ? data.slug : current[0].slug,
+        yaml_config: data.yaml_config !== undefined ? data.yaml_config : current[0].yaml_config,
+        webhook_url: data.webhook_url !== undefined ? data.webhook_url : current[0].webhook_url,
+        theme: data.theme !== undefined ? data.theme : current[0].theme,
+        generate_invoice: data.generate_invoice !== undefined ? data.generate_invoice : current[0].generate_invoice,
+      };
+
+      const result = await sql<Form>`
+        UPDATE forms
+        SET
+          name = ${updated.name},
+          slug = ${updated.slug},
+          yaml_config = ${updated.yaml_config},
+          webhook_url = ${updated.webhook_url},
+          theme = ${updated.theme},
+          generate_invoice = ${updated.generate_invoice},
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id} AND user_id = ${userId}
+        RETURNING *
+      `;
+      return result[0] || null;
     } catch (error) {
       console.error('Error updating form:', error);
       return null;
@@ -178,10 +172,10 @@ export const db = {
   async verifyFormOwnership(formId: string, userId: string): Promise<boolean> {
     try {
       const result = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM forms 
+        SELECT COUNT(*) as count FROM forms
         WHERE id = ${formId} AND user_id = ${userId} AND is_active = true
       `;
-      return parseInt(result.rows[0]?.count || '0') > 0;
+      return parseInt(result[0]?.count || '0') > 0;
     } catch (error) {
       console.error('Error verifying form ownership:', error);
       return false;
@@ -200,7 +194,7 @@ export const db = {
         VALUES (${data.form_id}, ${JSON.stringify(data.answers)}, ${JSON.stringify(data.metadata || {})})
         RETURNING *
       `;
-      return result.rows[0] || null;
+      return result[0] || null;
     } catch (error) {
       console.error('Error creating submission:', error);
       return null;
@@ -217,12 +211,12 @@ export const db = {
       }
 
       const result = await sql<Submission>`
-        SELECT * FROM submissions 
+        SELECT * FROM submissions
         WHERE form_id = ${formId}
         ORDER BY submitted_at DESC
         LIMIT ${limit}
       `;
-      return result.rows;
+      return result;
     } catch (error) {
       console.error('Error fetching submissions:', error);
       return [];
@@ -242,7 +236,7 @@ export const db = {
         SELECT COUNT(*) as count FROM submissions
         WHERE form_id = ${formId}
       `;
-      return parseInt(result.rows[0]?.count || '0');
+      return parseInt(result[0]?.count || '0');
     } catch (error) {
       console.error('Error counting submissions:', error);
       return 0;
@@ -257,7 +251,7 @@ export const db = {
         WHERE user_id = ${userId}
         LIMIT 1
       `;
-      return result.rows[0] || null;
+      return result[0] || null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;
@@ -281,7 +275,7 @@ export const db = {
           updated_at = CURRENT_TIMESTAMP
         RETURNING *
       `;
-      return result.rows[0] || null;
+      return result[0] || null;
     } catch (error) {
       console.error('Error upserting user profile:', error);
       return null;

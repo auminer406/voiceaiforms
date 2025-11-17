@@ -165,7 +165,7 @@ export default function ProfilePage() {
           <h3 className="font-semibold mb-2">How Automation Works:</h3>
           <ol className="text-sm text-slate-300 space-y-1 list-decimal list-inside">
             <li>Customer completes your voice form</li>
-            <li>OpenAI processes the form data into an automation</li>
+            <li>Formversation processes the form data into an automation</li>
             <li>Invoices are sent to the customer</li>
             <li>A copy is sent to your email above</li>
           </ol>

@@ -102,7 +102,7 @@ export default function LandingPage() {
 
     if (isMobile) {
       // Open in new tab for mobile
-      window.open('/demo?formId=demo-form', '_blank');
+      window.open('https://aivoiceforms.com/demo?formId=b9452795-27d4-4daa-ac84-b0cec5dbf054', '_blank');
     } else {
       // Open modal for desktop
       setShowDemoModal(true);
@@ -456,7 +456,7 @@ export default function LandingPage() {
             </div>
             <div className="aspect-video">
               <iframe
-                src="/demo?formId=early-access-v1"
+                src="https://aivoiceforms.com/demo?formId=b9452795-27d4-4daa-ac84-b0cec5dbf054"
                 className="w-full h-full"
                 allow="microphone"
               />

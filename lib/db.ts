@@ -42,7 +42,7 @@ export const db = {
         WHERE id = ${id} AND is_active = true
         LIMIT 1
       `;
-      return result[0] || null;
+      return (result[0] as Form) || null;
     } catch (error) {
       console.error('Error fetching form:', error);
       return null;
@@ -57,7 +57,7 @@ export const db = {
         WHERE slug = ${slug} AND is_active = true
         LIMIT 1
       `;
-      return result[0] || null;
+      return (result[0] as Form) || null;
     } catch (error) {
       console.error('Error fetching form by slug:', error);
       return null;
@@ -72,7 +72,7 @@ export const db = {
         WHERE is_active = true AND user_id = ${userId}
         ORDER BY created_at DESC
       `;
-      return result;
+      return result as Form[];
     } catch (error) {
       console.error('Error fetching forms:', error);
       return [];
@@ -95,7 +95,7 @@ export const db = {
         VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null}, ${data.theme || 'dark'}, ${data.generate_invoice || false})
         RETURNING *
       `;
-      return result[0] || null;
+      return (result[0] as Form) || null;
     } catch (error) {
       console.error('Error creating form:', error);
       return null;
@@ -146,7 +146,7 @@ export const db = {
         WHERE id = ${id} AND user_id = ${userId}
         RETURNING *
       `;
-      return result[0] || null;
+      return (result[0] as Form) || null;
     } catch (error) {
       console.error('Error updating form:', error);
       return null;
@@ -194,7 +194,7 @@ export const db = {
         VALUES (${data.form_id}, ${JSON.stringify(data.answers)}, ${JSON.stringify(data.metadata || {})})
         RETURNING *
       `;
-      return result[0] || null;
+      return (result[0] as Submission) || null;
     } catch (error) {
       console.error('Error creating submission:', error);
       return null;
@@ -216,7 +216,7 @@ export const db = {
         ORDER BY submitted_at DESC
         LIMIT ${limit}
       `;
-      return result;
+      return result as Submission[];
     } catch (error) {
       console.error('Error fetching submissions:', error);
       return [];
@@ -251,7 +251,7 @@ export const db = {
         WHERE user_id = ${userId}
         LIMIT 1
       `;
-      return result[0] || null;
+      return (result[0] as UserProfile) || null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;
@@ -275,7 +275,7 @@ export const db = {
           updated_at = CURRENT_TIMESTAMP
         RETURNING *
       `;
-      return result[0] || null;
+      return (result[0] as UserProfile) || null;
     } catch (error) {
       console.error('Error upserting user profile:', error);
       return null;

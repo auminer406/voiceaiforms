@@ -52,7 +52,7 @@ export const db = {
   // Get form by slug
   async getFormBySlug(slug: string): Promise<Form | null> {
     try {
-      const result = await sql<Form>`
+      const result = await sql`
         SELECT * FROM forms
         WHERE slug = ${slug} AND is_active = true
         LIMIT 1
@@ -67,7 +67,7 @@ export const db = {
   // Get all forms for a specific user
   async getAllForms(userId: string): Promise<Form[]> {
     try {
-      const result = await sql<Form>`
+      const result = await sql`
         SELECT * FROM forms
         WHERE is_active = true AND user_id = ${userId}
         ORDER BY created_at DESC
@@ -90,7 +90,7 @@ export const db = {
     generate_invoice?: boolean;
   }): Promise<Form | null> {
     try {
-      const result = await sql<Form>`
+      const result = await sql`
         INSERT INTO forms (user_id, name, slug, yaml_config, webhook_url, theme, generate_invoice)
         VALUES (${data.user_id}, ${data.name}, ${data.slug || null}, ${data.yaml_config}, ${data.webhook_url || null}, ${data.theme || 'dark'}, ${data.generate_invoice || false})
         RETURNING *
@@ -113,7 +113,7 @@ export const db = {
   }): Promise<Form | null> {
     try {
       // First get the current form
-      const current = await sql<Form>`
+      const current = await sql`
         SELECT * FROM forms
         WHERE id = ${id} AND user_id = ${userId}
         LIMIT 1
@@ -133,7 +133,7 @@ export const db = {
         generate_invoice: data.generate_invoice !== undefined ? data.generate_invoice : current[0].generate_invoice,
       };
 
-      const result = await sql<Form>`
+      const result = await sql`
         UPDATE forms
         SET
           name = ${updated.name},
@@ -171,7 +171,7 @@ export const db = {
   // Verify form ownership
   async verifyFormOwnership(formId: string, userId: string): Promise<boolean> {
     try {
-      const result = await sql<{ count: string }>`
+      const result = await sql`
         SELECT COUNT(*) as count FROM forms
         WHERE id = ${formId} AND user_id = ${userId} AND is_active = true
       `;
@@ -189,7 +189,7 @@ export const db = {
     metadata?: Record<string, any>;
   }): Promise<Submission | null> {
     try {
-      const result = await sql<Submission>`
+      const result = await sql`
         INSERT INTO submissions (form_id, answers, metadata)
         VALUES (${data.form_id}, ${JSON.stringify(data.answers)}, ${JSON.stringify(data.metadata || {})})
         RETURNING *
@@ -210,7 +210,7 @@ export const db = {
         return [];
       }
 
-      const result = await sql<Submission>`
+      const result = await sql`
         SELECT * FROM submissions
         WHERE form_id = ${formId}
         ORDER BY submitted_at DESC
@@ -232,7 +232,7 @@ export const db = {
         return 0;
       }
 
-      const result = await sql<{ count: string }>`
+      const result = await sql`
         SELECT COUNT(*) as count FROM submissions
         WHERE form_id = ${formId}
       `;
@@ -246,7 +246,7 @@ export const db = {
   // Get user profile by user_id
   async getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
-      const result = await sql<UserProfile>`
+      const result = await sql`
         SELECT * FROM user_profiles
         WHERE user_id = ${userId}
         LIMIT 1
@@ -265,7 +265,7 @@ export const db = {
     company_name?: string;
   }): Promise<UserProfile | null> {
     try {
-      const result = await sql<UserProfile>`
+      const result = await sql`
         INSERT INTO user_profiles (user_id, email, company_name)
         VALUES (${data.user_id}, ${data.email}, ${data.company_name || null})
         ON CONFLICT (user_id)

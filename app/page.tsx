@@ -8,35 +8,9 @@ export default function LandingPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
 
-  // Countdown timer to Nov 27, 2025 10PM MST
-  useEffect(() => {
-    const targetDate = new Date('2025-11-27T22:00:00-07:00').getTime();
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const distance = targetDate - now;
-
-      if (distance > 0) {
-        setTimeLeft({
-          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((distance % (1000 * 60)) / 1000)
-        });
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // YouTube video ID - replace with your actual video ID
+  const YOUTUBE_VIDEO_ID = 'NSdldFOqGx0';
 
   // Detect affiliate ref parameter
   useEffect(() => {
@@ -197,29 +171,15 @@ export default function LandingPage() {
             Every Form Deserves a <span className="text-teal-400">Conversation</span>
           </h2>
 
-          <p className="text-sm text-slate-400 text-center mb-2">
-            [Demo video coming soon]
-          </p>
-
-
-          {/* Video Placeholder */}
+          {/* YouTube Video Player */}
           <div className="relative aspect-video bg-slate-800/50 rounded-2xl overflow-hidden mb-8 border border-slate-700">
-            <Image
-              src="/images/VoiceAIFormsAppLayoutExample.png"
-              alt="Formversation Demo"
-              fill
-              className="object-cover"
+            <iframe
+              src={`https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}`}
+              title="Formversation Demo"
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-4 bg-teal-500/20 rounded-full flex items-center justify-center">
-                  <svg className="w-10 h-10 text-teal-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                  </svg>
-                </div>
-                <p className="text-slate-300">Demo video coming soon</p>
-              </div>
-            </div>
           </div>
 
           <div className="text-center">
@@ -320,39 +280,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Countdown Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-8">
-            This Offer Ends Soon
-          </h2>
-
-          <div className="flex justify-center gap-4 mb-8">
-            {[
-              { label: 'Days', value: timeLeft.days },
-              { label: 'Hours', value: timeLeft.hours },
-              { label: 'Minutes', value: timeLeft.minutes },
-              { label: 'Seconds', value: timeLeft.seconds }
-            ].map((unit, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <div className="w-20 h-20 bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-center">
-                  <span className="text-3xl font-bold text-teal-400">{unit.value}</span>
-                </div>
-                <span className="text-sm text-slate-400 mt-2">{unit.label}</span>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-slate-300 mb-8">
-            November 27, 2025 at 10:00 PM MST
-          </p>
-
-          <p className="text-lg font-semibold text-teal-300">
-            Only 1000 spots. No exceptions.
-          </p>
-        </div>
-      </section>
-
       {/* FAQ Section */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto">
@@ -375,8 +302,8 @@ export default function LandingPage() {
                 a: "Unlimited forms, 10k submissions/month, all themes, webhook integrations, and priority support."
               },
               {
-                q: "Is there a money-back guarantee?",
-                a: "Yes! 30-day full refund if you're not satisfied."
+                q: "Is this really a one-time payment?",
+                a: "Yes! $25 one-time payment gives you lifetime Pro access. No recurring charges, ever."
               },
               {
                 q: "Will my price ever increase?",
@@ -420,7 +347,7 @@ export default function LandingPage() {
           </form>
 
           <p className="text-sm text-slate-400">
-            30-day money-back guarantee • Secure payment via Stripe
+            Secure payment via Stripe • Limited to 1000 lifetime members
           </p>
         </div>
       </section>

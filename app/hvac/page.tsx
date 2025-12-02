@@ -9,11 +9,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Voice Invoicing for HVAC Contractors - Get Paid Faster',
     description: 'Create detailed HVAC service invoices in 60 seconds using your voice. No typing. No apps. Just talk.',
-    url: 'https://voiceaiforms.com/hvac',
+    url: 'https://aivoiceforms.com/hvac',
     siteName: 'VoiceAIForms',
     images: [
       {
-        url: 'https://voiceaiforms.com/images/VoiceAIFormsYouCanTalkTo.png',
+        url: 'https://aivoiceforms.com/images/VoiceAIFormsYouCanTalkTo.png',
         width: 1200,
         height: 630,
         alt: 'VoiceAIForms - Voice Invoicing for HVAC',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Voice Invoicing for HVAC Contractors',
     description: 'Create HVAC invoices in 60 seconds using your voice. Join 1000 founders for $25.',
-    images: ['https://voiceaiforms.com/images/VoiceAIFormsYouCanTalkTo.png'],
+    images: ['https://aivoiceforms.com/images/VoiceAIFormsYouCanTalkTo.png'],
   },
 };
 
@@ -62,13 +62,13 @@ export default function HVACLandingPage() {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://voiceaiforms.com"
+        "item": "https://aivoiceforms.com"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "HVAC",
-        "item": "https://voiceaiforms.com/hvac"
+        "item": "https://aivoiceforms.com/hvac"
       }
     ]
   };

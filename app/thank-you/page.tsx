@@ -93,7 +93,7 @@ function ThankYouContent() {
             </div>
 
             <p className="text-sm text-slate-400 mt-8">
-              Questions? Email us at support@voiceaiforms.com
+              Questions? Email us at support@aivoiceforms.com
             </p>
           </div>
         </div>
@@ -146,7 +146,7 @@ function ThankYouContent() {
             
             <div className="flex gap-3 justify-center">
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Just tried @VoiceAIForms - voice forms are the future! Check it out:')}&url=${encodeURIComponent('https://voiceaiforms.com')}`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Just tried @VoiceAIForms - voice forms are the future! Check it out:')}&url=${encodeURIComponent('https://aivoiceforms.com')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-6 py-3 bg-[#1DA1F2] rounded-lg font-semibold hover:bg-[#1a8cd8] transition"
@@ -154,7 +154,7 @@ function ThankYouContent() {
                 Share on Twitter
               </a>
               <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://voiceaiforms.com')}`}
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://aivoiceforms.com')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-6 py-3 bg-[#0077B5] rounded-lg font-semibold hover:bg-[#006399] transition"

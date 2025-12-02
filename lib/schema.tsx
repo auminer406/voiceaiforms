@@ -6,8 +6,8 @@ export function OrganizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "VoiceAIForms",
-    "url": "https://voiceaiforms.com",
-    "logo": "https://voiceaiforms.com/images/VoiceAIFormsYouCanTalkTo.png",
+    "url": "https://aivoiceforms.com",
+    "logo": "https://aivoiceforms.com/images/VoiceAIFormsYouCanTalkTo.png",
     "description": "Voice-to-invoice software for field service professionals. Create detailed invoices in 60 seconds using your voice.",
     "foundingDate": "2025",
     "sameAs": [
@@ -19,7 +19,7 @@ export function OrganizationSchema() {
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "Customer Support",
-      "email": "support@voiceaiforms.com"
+      "email": "support@aivoiceforms.com"
     }
   };
 
@@ -54,7 +54,7 @@ export function SoftwareApplicationSchema() {
       "worstRating": "1"
     },
     "description": "Voice-to-invoice software that helps field service professionals create detailed invoices in 60 seconds using voice commands. No typing required.",
-    "screenshot": "https://voiceaiforms.com/images/VoiceAIFormsAppLayoutExample.png",
+    "screenshot": "https://aivoiceforms.com/images/VoiceAIFormsAppLayoutExample.png",
     "featureList": [
       "Voice-to-text invoice creation",
       "Hands-free operation",
@@ -132,14 +132,14 @@ export function ProductSchema() {
     "@type": "Product",
     "name": "VoiceAIForms Pro - Lifetime Access",
     "description": "Lifetime Pro access to VoiceAIForms voice-to-invoice software. Limited time offer for first 1000 founders.",
-    "image": "https://voiceaiforms.com/images/VoiceAIFormsYouCanTalkTo.png",
+    "image": "https://aivoiceforms.com/images/VoiceAIFormsYouCanTalkTo.png",
     "brand": {
       "@type": "Brand",
       "name": "VoiceAIForms"
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://voiceaiforms.com",
+      "url": "https://aivoiceforms.com",
       "priceCurrency": "USD",
       "price": "25",
       "priceValidUntil": "2025-11-27",

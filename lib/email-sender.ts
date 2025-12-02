@@ -146,7 +146,7 @@ export async function sendServiceRequestNotification(
       throw new Error('RESEND_API_KEY is not configured');
     }
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'notifications@voiceaiforms.com';
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'notifications@aivoiceforms.com';
 
     // Build HTML email with form answers
     const answersHTML = Object.entries(answers)
